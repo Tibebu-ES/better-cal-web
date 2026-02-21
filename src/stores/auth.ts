@@ -24,6 +24,7 @@ export const useAuthStore = defineStore("auth", {
 
       this.user = res.data.user;
       this.token = res.data.token;
+      // @ts-ignore
       localStorage.setItem('token', this.token);
     },
 
@@ -34,6 +35,7 @@ export const useAuthStore = defineStore("auth", {
 
         this.user = res.data.user;
         this.token = res.data.token;
+        // @ts-ignore
         localStorage.setItem('token', this.token);
       },
       

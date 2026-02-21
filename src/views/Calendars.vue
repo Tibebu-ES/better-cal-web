@@ -1,15 +1,23 @@
-<script setup >
+<script setup lang="ts">
 import { onMounted, ref } from "vue"
 import api from "@/api/axios"
 import { useRouter } from "vue-router"
+
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import CreateCalendarModal from "@/components/CreateCalendarModal.vue"
 
+interface Calendar {
+  id: number,
+  name: string,
+  about: string,
+}
+
+
 const router = useRouter()
-const calendars = ref([])
 const showCreate = ref(false)
+const calendars = ref<Calendar[]>([])
 
 const fetchCalendars = async () => {
   const res = await api.get("/v1/calendars")
@@ -18,8 +26,10 @@ const fetchCalendars = async () => {
 
 onMounted(fetchCalendars)
 
-const openCalendar = (calendar) => {
-  router.push(`/dashboard/${calendar.id}`)
+const openCalendar = (id: number)  => {
+  //@todo set the selected calendar in the store
+  localStorage.setItem("selectedCalendar", String(id))
+  router.push(`/calendar/dashboard`)
 }
 </script>
 
@@ -35,7 +45,7 @@ const openCalendar = (calendar) => {
           v-for="calendar in calendars"
           :key="calendar.id"
           class="cursor-pointer hover:bg-muted"
-          @click="openCalendar(calendar)"
+          @click="openCalendar(calendar.id)"
       >
         <CardHeader>
           <CardTitle>{{ calendar.name }}</CardTitle>

@@ -5,6 +5,9 @@ import Login from "@/views/Login.vue";
 import Register from "@/views/Register.vue";
 import Calendars from "@/views/Calendars.vue";
 import Dashboard from "@/views/Dashboard.vue";
+import DashboardLayout from "@/views/DashboardLayout.vue";
+import SubCalendars from "@/views/SubCalendars.vue";
+import CustomEventFields from "@/views/CustomEventFields.vue";
 
 
 
@@ -33,11 +36,19 @@ const routes = [
         component: Calendars,
         meta: { requiresAuth: true }
     },
+
+    // App layout with nested pages (sidebar stays, content swaps)
     {
-        path: '/dashboard/:id',
-        component: Dashboard,
-        meta: { requiresAuth: true }
-    }
+        path: '/calendar',
+        component: DashboardLayout,
+        meta: { requiresAuth: true },
+        children: [
+            { path: '', redirect: '/calendar/dashboard' },
+            { path: 'dashboard', component: Dashboard },
+            { path: 'sub-calendars', component: SubCalendars },
+            {path: 'event-fields', component: CustomEventFields}
+        ],
+    },
 ];
 
 const router = createRouter({
