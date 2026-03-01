@@ -83,7 +83,7 @@ export const useCalendarStore = defineStore("calendar", {
 
         async deleteSubCalendar(id: number) {
             if (!this.selectedCalendar) return;
-            await api.delete(`/v1/calendars${this.selectedCalendar.id}/sub-calendars/${id}`);
+            await api.delete(`/v1/calendars/${this.selectedCalendar.id}/sub-calendars/${id}`);
             this.subCalendars = this.subCalendars.filter(sub => sub.id !== id);
         },
 

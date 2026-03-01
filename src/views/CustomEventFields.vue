@@ -16,6 +16,7 @@ import {
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Trash2} from "lucide-vue-next";
+import ConfirmModal from "@/components/ConfirmModal.vue";
 
 const calendarStore = useCalendarStore();
 
@@ -23,8 +24,10 @@ const selectedCalendar = computed(() => calendarStore.selectedCalendar);
 const customEventFields = computed( () => calendarStore.customEventFields);
 
 const dialogOpen = ref(false)
+const confirmOpen = ref(false)
 const dialogMode = ref<"create" | "edit">("create")
 const editingId = ref<number | null>(null)
+const itemToDelete = ref<number | null>(null)
 
 const form = reactive({
   name: "",
@@ -42,9 +45,15 @@ function openEditDialog(field: CustomEventField) {
 }
 
 async function removeCustomEventField(id: number) {
-  const ok = window.confirm("Delete this custom event field?")
-  if (!ok) return
-  await calendarStore.deleteCustomEventField(id)
+  itemToDelete.value = id
+  confirmOpen.value = true
+}
+
+async function handleConfirmDelete() {
+  if (itemToDelete.value !== null) {
+    await calendarStore.deleteCustomEventField(itemToDelete.value)
+    itemToDelete.value = null
+  }
 }
 
 
@@ -199,6 +208,13 @@ onMounted(async () => {
       </DialogFooter>
     </DialogContent>
   </Dialog>
+
+  <ConfirmModal
+      v-model:open="confirmOpen"
+      title="Delete event field"
+      description="Are you sure you want to delete this event field? This action cannot be undone."
+      @confirm="handleConfirmDelete"
+  />
 </template>
 
 <style scoped>

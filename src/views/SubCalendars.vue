@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from "vue"
 import router from "@/router"
 import { useCalendarStore, type SubCalendar } from "@/stores/calendar"
+import ConfirmModal from "@/components/ConfirmModal.vue"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,8 +30,10 @@ const subCalendars = computed(() => calendarStore.subCalendars)
 const selectedCalendar = computed(() => calendarStore.selectedCalendar)
 
 const dialogOpen = ref(false)
+const confirmOpen = ref(false)
 const dialogMode = ref<"create" | "edit">("create")
 const editingId = ref<number | null>(null)
+const itemToDelete = ref<number | null>(null)
 
 const form = reactive({
   name: "",
@@ -79,9 +82,15 @@ async function submitDialog() {
 }
 
 async function removeSubCalendar(id: number) {
-  const ok = window.confirm("Delete this sub-calendar?")
-  if (!ok) return
-  await calendarStore.deleteSubCalendar(id)
+  itemToDelete.value = id
+  confirmOpen.value = true
+}
+
+async function handleConfirmDelete() {
+  if (itemToDelete.value !== null) {
+    await calendarStore.deleteSubCalendar(itemToDelete.value)
+    itemToDelete.value = null
+  }
 }
 
 onMounted(async () => {
@@ -225,6 +234,13 @@ onMounted(async () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <ConfirmModal
+      v-model:open="confirmOpen"
+      title="Delete sub-calendar"
+      description="Are you sure you want to delete this sub-calendar? This action cannot be undone."
+      @confirm="handleConfirmDelete"
+    />
   </div>
 </template>
 
