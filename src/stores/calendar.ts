@@ -135,6 +135,16 @@ export const useCalendarStore = defineStore("calendar", {
             this.accessKeys = res.data.data;
         },
 
+        async loadAllEntities() {
+            this.loading = true;
+            await Promise.all([
+                this.loadSubCalendars(),
+                this.loadCustomEventFields(),
+                this.loadAccessKeys()
+            ]);
+            this.loading = false;
+        },
+
         async createAccessKey(key: AccessKey) {
             if (!this.selectedCalendar) return;
             const res = await api.post(`/v1/calendars/${this.selectedCalendar.id}/access-keys`, key);

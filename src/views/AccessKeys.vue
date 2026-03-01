@@ -143,10 +143,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-8 p-4">
     <div class="flex items-center justify-between gap-4">
       <div class="space-y-1">
-        <h2 class="text-lg font-semibold">Access keys</h2>
+        <h2 class="text-3xl font-bold tracking-tight">Access keys</h2>
         <p class="text-sm text-muted-foreground">
           Manage access keys for
           <span class="font-medium">{{ selectedCalendar?.name ?? "…" }}</span>

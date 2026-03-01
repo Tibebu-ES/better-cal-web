@@ -137,10 +137,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-8 p-4">
     <div class="flex items-center justify-between gap-4">
       <div class="space-y-1">
-        <h2 class="text-lg font-semibold">Event fields</h2>
+        <h2 class="text-3xl font-bold tracking-tight">Event fields</h2>
         <p class="text-sm text-muted-foreground">
           Manage event fields for
           <span class="font-medium">{{ selectedCalendar?.name ?? "…" }}</span>

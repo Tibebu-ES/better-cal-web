@@ -12,13 +12,13 @@ import AppSidebar from "@/components/AppSidebar.vue";
   <SidebarProvider>
     <AppSidebar />
 
-    <SidebarInset>
-      <header class="flex h-14 items-center gap-2 border-b px-4">
+    <SidebarInset class="flex flex-col overflow-hidden">
+      <header class="flex h-14 items-center gap-2 border-b px-4 shrink-0">
         <SidebarTrigger />
-        <h1 class="text-base font-semibold">Calendar Dashboard</h1>
+        <h1 class="text-base font-semibold">Dashboard</h1>
       </header>
 
-      <main class="p-4">
+      <main class="flex-1 overflow-hidden p-4">
         <RouterView />
       </main>
     </SidebarInset>
