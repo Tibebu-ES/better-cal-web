@@ -1,15 +1,73 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
-import {useCalendarStore, type CustomEventField, type CustomEventFieldOption} from "@/stores/calendar.ts";
+import {computed, onMounted, reactive, ref} from "vue";
+import {useCalendarStore, type CustomEventField} from "@/stores/calendar.ts";
 import router from "@/router";
 
 import {Button} from "@/components/ui/button";
-import {Card, CardAction, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardHeader, CardTitle} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {Trash2} from "lucide-vue-next";
 
 const calendarStore = useCalendarStore();
 
 const selectedCalendar = computed(() => calendarStore.selectedCalendar);
 const customEventFields = computed( () => calendarStore.customEventFields);
+
+const dialogOpen = ref(false)
+const dialogMode = ref<"create" | "edit">("create")
+const editingId = ref<number | null>(null)
+
+const form = reactive({
+  name: "",
+  type: "text",
+  options: [] as {id?: number, name: string}[],
+})
+
+function openEditDialog(field: CustomEventField) {
+  dialogMode.value = "edit"
+  editingId.value = field.id
+  form.name = field.name
+  form.type = field.type
+  form.options = field.options.map(o => ({ id: o.id, name: o.name }))
+  dialogOpen.value = true
+}
+
+async function removeCustomEventField(id: number) {
+  const ok = window.confirm("Delete this custom event field?")
+  if (!ok) return
+  await calendarStore.deleteCustomEventField(id)
+}
+
+
+function addOption() {
+  form.options.push({ name: "" })
+}
+
+function removeOption(index: number) {
+  form.options.splice(index, 1)
+}
+
+const dialogTitle = computed(() =>
+    dialogMode.value === "create" ? "Add event field" : "Edit event field",
+)
+
+function openCreateDialog() {
+  dialogMode.value = "create"
+  editingId.value = null
+  form.name = ""
+  form.type = "text"
+  form.options = []
+  dialogOpen.value = true
+}
 
 //get custom event field type label function given type as text, 's_select', 'm_select'
 function getCustomEventFieldTypeLabel(type: CustomEventField['type']) {
@@ -20,6 +78,31 @@ function getCustomEventFieldTypeLabel(type: CustomEventField['type']) {
   }
 }
 
+async function submitDialog() {
+  if (!form.name.trim()) return
+
+  if (dialogMode.value === "create") {
+    const payload = {
+      name: form.name.trim(),
+      type: form.type,
+      options: form.type === 'text' ? [] : form.options.filter(o => o.name.trim() !== "").map(o => o.name.trim())
+    }
+    await calendarStore.createCustomEventField(payload)
+  } else if (editingId.value != null) {
+    const payload = {
+      name: form.name.trim(),
+      type: form.type,
+      options: form.type === 'text' ? [] : form.options.filter(o => o.name.trim() !== "").map(o => ({
+        id: o.id,
+        name: o.name.trim(),
+        custom_event_field_id: editingId.value
+      }))
+    }
+    await calendarStore.updateCustomEventField(editingId.value, payload as any)
+  }
+
+  dialogOpen.value = false
+}
 
 onMounted(async () => {
   const selectedCalendarId = localStorage.getItem("selectedCalendar")
@@ -44,23 +127,78 @@ onMounted(async () => {
         </p>
       </div>
 
-      <Button >Add event field</Button>
+      <Button @click="openCreateDialog" >Add event field</Button>
     </div>
 
 <!--   list of custom event fields -->
-    <div class="grid  gap-4">
-        <Card v-for="field in customEventFields" :key="field.id" class="flex  gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card v-for="field in customEventFields" :key="field.id" class="flex flex-col">
           <CardHeader>
             <CardTitle>{{ field.name }}</CardTitle>
             <div class="text-sm text-muted-foreground">{{ getCustomEventFieldTypeLabel(field.type) }}</div>
-            <CardAction>
-              <Button variant="outline">Edit</Button>
-            </CardAction>
+            <div class="mt-4 flex gap-2">
+              <Button variant="outline" size="sm" @click="openEditDialog(field)">Edit</Button>
+              <Button variant="destructive" size="sm" @click="removeCustomEventField(field.id)">Delete</Button>
+            </div>
           </CardHeader>
         </Card>
     </div>
-
   </div>
+
+  <Dialog v-model:open="dialogOpen">
+    <DialogContent class="sm:max-w-[520px]">
+      <DialogHeader>
+        <DialogTitle>{{ dialogTitle }}</DialogTitle>
+        <DialogDescription>
+          Set a name, type, and options.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div class="grid gap-4 py-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex flex-col space-y-1.5">
+            <Label for="name">Name</Label>
+            <Input v-model="form.name" id="name" placeholder="e.g. Location, Department" required />
+          </div>
+          <div class="flex flex-col space-y-1.5">
+            <Label for="type">Type</Label>
+            <select v-model="form.type" id="type" :disabled="dialogMode === 'edit'" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" >
+              <option value="text">Text</option>
+              <option value="s_select">Single select</option>
+              <option value="m_select">Multi select</option>
+            </select>
+          </div>
+        </div>
+
+        <div v-if="form.type === 's_select' || form.type === 'm_select'" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <Label>Options</Label>
+            <Button type="button" variant="outline" size="sm" @click="addOption">Add option</Button>
+          </div>
+
+          <div class="space-y-2">
+            <div v-for="(option, index) in form.options" :key="index" class="flex items-center gap-2">
+              <Input v-model="form.options[index].name" placeholder="Option name" required />
+              <Button type="button" variant="ghost" size="icon" @click="removeOption(index)">
+                <Trash2 class="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+            <p v-if="form.options.length === 0" class="text-sm text-muted-foreground text-center py-2 border border-dashed rounded-md">
+              No options added yet. Click "Add option" to start.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <DialogFooter class="gap-2">
+        <Button variant="outline" @click="dialogOpen = false">Cancel</Button>
+        <Button @click="submitDialog">
+          {{ dialogMode === "create" ? "Create" : "Save changes" }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <style scoped>

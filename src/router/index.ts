@@ -11,6 +11,7 @@ import CustomEventFields from "@/views/CustomEventFields.vue";
 
 
 
+
 const routes = [
       {
         path: '/',
@@ -46,7 +47,8 @@ const routes = [
             { path: '', redirect: '/calendar/dashboard' },
             { path: 'dashboard', component: Dashboard },
             { path: 'sub-calendars', component: SubCalendars },
-            {path: 'event-fields', component: CustomEventFields}
+            {path: 'event-fields', component: CustomEventFields},
+            { path: '/:pathMatch(.*)*', redirect: '/calendar/dashboard'}
         ],
     },
 ];
