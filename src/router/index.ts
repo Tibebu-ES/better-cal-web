@@ -8,6 +8,7 @@ import Dashboard from "@/views/Dashboard.vue";
 import DashboardLayout from "@/views/DashboardLayout.vue";
 import SubCalendars from "@/views/SubCalendars.vue";
 import CustomEventFields from "@/views/CustomEventFields.vue";
+import AccessKeys from "@/views/AccessKeys.vue";
 
 
 
@@ -47,7 +48,8 @@ const routes = [
             { path: '', redirect: '/calendar/dashboard' },
             { path: 'dashboard', component: Dashboard },
             { path: 'sub-calendars', component: SubCalendars },
-            {path: 'event-fields', component: CustomEventFields},
+            { path: 'event-fields', component: CustomEventFields},
+            { path: 'access-keys', component: AccessKeys},
             { path: '/:pathMatch(.*)*', redirect: '/calendar/dashboard'}
         ],
     },

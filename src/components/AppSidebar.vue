@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Calendar, ListPlus, LayoutTemplate, GalleryVerticalEnd } from 'lucide-vue-next'
+import { Calendar, ListPlus, LayoutTemplate, GalleryVerticalEnd, Eye } from 'lucide-vue-next'
 import {
   Sidebar,
   SidebarContent,
@@ -28,7 +28,13 @@ const items = [
     title: 'Event Fields',
     url: '/calendar/event-fields',
     icon: ListPlus,
-  }
+  },
+  {
+    title: 'Access Keys',
+    url: '/calendar/access-keys',
+    icon: Eye,
+  },
+
 ]
 </script>
 
