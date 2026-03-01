@@ -4,6 +4,7 @@ import router from "@/router"
 import { useCalendarStore, type SubCalendar } from "@/stores/calendar"
 import ConfirmModal from "@/components/ConfirmModal.vue"
 import { toast } from "vue-sonner"
+import { Plus, Pencil, Trash2, Check, X } from "lucide-vue-next"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -124,7 +125,10 @@ onMounted(async () => {
         </p>
       </div>
 
-      <Button @click="openCreateDialog">Add sub-calendar</Button>
+      <Button @click="openCreateDialog">
+        <Plus class="mr-2 h-4 w-4" />
+        Add sub-calendar
+      </Button>
     </div>
 
     <div class="rounded-lg border">
@@ -154,24 +158,26 @@ onMounted(async () => {
             </TableCell>
 
             <TableCell>
-              <span class="text-sm">{{ sub.overlap ? "Yes" : "No" }}</span>
+              <Check v-if="sub.overlap" class="h-4 w-4 text-green-500" />
+              <X v-else class="h-4 w-4 text-muted-foreground" />
             </TableCell>
 
             <TableCell>
-              <span class="text-sm">{{ sub.active ? "Yes" : "No" }}</span>
+              <Check v-if="sub.active" class="h-4 w-4 text-green-500" />
+              <X v-else class="h-4 w-4 text-muted-foreground" />
             </TableCell>
 
             <TableCell>
               <div class="flex justify-end gap-2">
-                <Button variant="outline" size="sm" @click="openEditDialog(sub)">
-                  Edit
+                <Button variant="outline" size="icon" @click="openEditDialog(sub)">
+                  <Pencil class="h-4 w-4" />
                 </Button>
                 <Button
                   variant="destructive"
-                  size="sm"
+                  size="icon"
                   @click="removeSubCalendar(sub.id)"
                 >
-                  Delete
+                  <Trash2 class="h-4 w-4" />
                 </Button>
               </div>
             </TableCell>

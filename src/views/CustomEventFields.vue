@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
-import {Trash2} from "lucide-vue-next";
+import {Trash2, Plus, Pencil} from "lucide-vue-next";
 import ConfirmModal from "@/components/ConfirmModal.vue";
 import {toast} from "vue-sonner";
 
@@ -147,7 +147,10 @@ onMounted(async () => {
         </p>
       </div>
 
-      <Button @click="openCreateDialog" >Add event field</Button>
+      <Button @click="openCreateDialog" >
+        <Plus class="mr-2 h-4 w-4" />
+        Add event field
+      </Button>
     </div>
 
 <!--   list of custom event fields -->
@@ -157,8 +160,14 @@ onMounted(async () => {
             <CardTitle>{{ field.name }}</CardTitle>
             <div class="text-sm text-muted-foreground">{{ getCustomEventFieldTypeLabel(field.type) }}</div>
             <div class="mt-4 flex gap-2">
-              <Button variant="outline" size="sm" @click="openEditDialog(field)">Edit</Button>
-              <Button variant="destructive" size="sm" @click="removeCustomEventField(field.id)">Delete</Button>
+              <Button variant="outline" size="sm" @click="openEditDialog(field)">
+                <Pencil class="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+              <Button variant="destructive" size="sm" @click="removeCustomEventField(field.id)">
+                <Trash2 class="mr-2 h-4 w-4" />
+                Delete
+              </Button>
             </div>
           </CardHeader>
         </Card>
@@ -193,7 +202,10 @@ onMounted(async () => {
         <div v-if="form.type === 's_select' || form.type === 'm_select'" class="space-y-4">
           <div class="flex items-center justify-between">
             <Label>Options</Label>
-            <Button type="button" variant="outline" size="sm" @click="addOption">Add option</Button>
+            <Button type="button" variant="outline" size="sm" @click="addOption">
+              <Plus class="mr-2 h-4 w-4" />
+              Add option
+            </Button>
           </div>
 
           <div class="space-y-2">
