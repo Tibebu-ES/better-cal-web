@@ -198,7 +198,7 @@ onMounted(async () => {
 
           <div class="space-y-2">
             <div v-for="(option, index) in form.options" :key="index" class="flex items-center gap-2">
-              <Input v-model="form.options[index].name" placeholder="Option name" required />
+              <Input v-model="option.name" placeholder="Option name" required />
               <Button type="button" variant="ghost" size="icon" @click="removeOption(index)">
                 <Trash2 class="h-4 w-4 text-destructive" />
               </Button>
