@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 
+import { toast } from "vue-sonner"
+
 const auth = useAuthStore()
 const router = useRouter()
 
 const email = ref("")
 const password = ref("")
-const error = ref(null)
 
 const submit = async () => {
   try {
@@ -22,9 +23,10 @@ const submit = async () => {
       password: password.value
     })
 
+    toast.success("Welcome back!")
     router.push("/calendars")
   } catch (e) {
-    error.value = "Invalid credentials"
+    toast.error("Invalid credentials")
   }
 }
 </script>
@@ -46,8 +48,6 @@ const submit = async () => {
           <Label>Password</Label>
           <Input v-model="password" type="password" />
         </div>
-
-        <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
 
         <Button class="w-full" @click="submit">
           Login

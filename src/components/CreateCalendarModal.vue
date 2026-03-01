@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import api from "@/api/axios"
+import { toast } from "vue-sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,13 +19,18 @@ const name = ref("")
 const about = ref("")
 
 const create = async () => {
-  await api.post("/v1/calendars", {
-    name: name.value,
-    about: about.value
-  })
+  try {
+    await api.post("/v1/calendars", {
+      name: name.value,
+      about: about.value
+    })
 
-  emit("created")
-  emit("close")
+    toast.success("Calendar created successfully")
+    emit("created")
+    emit("close")
+  } catch (e) {
+    toast.error("Failed to create calendar")
+  }
 }
 </script>
 

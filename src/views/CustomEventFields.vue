@@ -17,6 +17,7 @@ import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Trash2} from "lucide-vue-next";
 import ConfirmModal from "@/components/ConfirmModal.vue";
+import {toast} from "vue-sonner";
 
 const calendarStore = useCalendarStore();
 
@@ -51,8 +52,13 @@ async function removeCustomEventField(id: number) {
 
 async function handleConfirmDelete() {
   if (itemToDelete.value !== null) {
-    await calendarStore.deleteCustomEventField(itemToDelete.value)
-    itemToDelete.value = null
+    try {
+      await calendarStore.deleteCustomEventField(itemToDelete.value)
+      toast.success("Event field deleted successfully")
+      itemToDelete.value = null
+    } catch (e) {
+      toast.error("Failed to delete event field")
+    }
   }
 }
 
@@ -90,27 +96,32 @@ function getCustomEventFieldTypeLabel(type: CustomEventField['type']) {
 async function submitDialog() {
   if (!form.name.trim()) return
 
-  if (dialogMode.value === "create") {
-    const payload = {
-      name: form.name.trim(),
-      type: form.type,
-      options: form.type === 'text' ? [] : form.options.filter(o => o.name.trim() !== "").map(o => o.name.trim())
+  try {
+    if (dialogMode.value === "create") {
+      const payload = {
+        name: form.name.trim(),
+        type: form.type,
+        options: form.type === 'text' ? [] : form.options.filter(o => o.name.trim() !== "").map(o => o.name.trim())
+      }
+      await calendarStore.createCustomEventField(payload)
+      toast.success("Event field created successfully")
+    } else if (editingId.value != null) {
+      const payload = {
+        name: form.name.trim(),
+        type: form.type,
+        options: form.type === 'text' ? [] : form.options.filter(o => o.name.trim() !== "").map(o => ({
+          id: o.id,
+          name: o.name.trim(),
+          custom_event_field_id: editingId.value
+        }))
+      }
+      await calendarStore.updateCustomEventField(editingId.value, payload as any)
+      toast.success("Event field updated successfully")
     }
-    await calendarStore.createCustomEventField(payload)
-  } else if (editingId.value != null) {
-    const payload = {
-      name: form.name.trim(),
-      type: form.type,
-      options: form.type === 'text' ? [] : form.options.filter(o => o.name.trim() !== "").map(o => ({
-        id: o.id,
-        name: o.name.trim(),
-        custom_event_field_id: editingId.value
-      }))
-    }
-    await calendarStore.updateCustomEventField(editingId.value, payload as any)
+    dialogOpen.value = false
+  } catch (e) {
+    toast.error(dialogMode.value === "create" ? "Failed to create event field" : "Failed to update event field")
   }
-
-  dialogOpen.value = false
 }
 
 onMounted(async () => {

@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue"
 import router from "@/router"
 import { useCalendarStore, type SubCalendar } from "@/stores/calendar"
 import ConfirmModal from "@/components/ConfirmModal.vue"
+import { toast } from "vue-sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -72,13 +73,18 @@ async function submitDialog() {
 
   if (!payload.name) return
 
-  if (dialogMode.value === "create") {
-    await calendarStore.createSubCalendar(payload)
-  } else if (editingId.value != null) {
-    await calendarStore.updateSubCalendar(editingId.value, payload)
+  try {
+    if (dialogMode.value === "create") {
+      await calendarStore.createSubCalendar(payload)
+      toast.success("Sub-calendar created successfully")
+    } else if (editingId.value != null) {
+      await calendarStore.updateSubCalendar(editingId.value, payload)
+      toast.success("Sub-calendar updated successfully")
+    }
+    dialogOpen.value = false
+  } catch (e) {
+    toast.error(dialogMode.value === "create" ? "Failed to create sub-calendar" : "Failed to update sub-calendar")
   }
-
-  dialogOpen.value = false
 }
 
 async function removeSubCalendar(id: number) {
@@ -88,8 +94,13 @@ async function removeSubCalendar(id: number) {
 
 async function handleConfirmDelete() {
   if (itemToDelete.value !== null) {
-    await calendarStore.deleteSubCalendar(itemToDelete.value)
-    itemToDelete.value = null
+    try {
+      await calendarStore.deleteSubCalendar(itemToDelete.value)
+      toast.success("Sub-calendar deleted successfully")
+      itemToDelete.value = null
+    } catch (e) {
+      toast.error("Failed to delete sub-calendar")
+    }
   }
 }
 

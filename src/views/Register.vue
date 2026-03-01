@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { toast } from "vue-sonner"
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -16,9 +17,13 @@ const email = ref("")
 const password = ref("")
 
 const submit = async () => {
-  await auth.register(name.value, email.value, password.value)
-
-  router.push("/calendars")
+  try {
+    await auth.register(name.value, email.value, password.value)
+    toast.success("Account created successfully!")
+    router.push("/calendars")
+  } catch (e) {
+    toast.error("Registration failed. Please try again.")
+  }
 }
 </script>
 
