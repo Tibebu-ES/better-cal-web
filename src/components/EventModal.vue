@@ -106,6 +106,26 @@ function formatDateTime(dateStr: string) {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
+watch(() => form.value.all_day, (isAllDay) => {
+  if (isAllDay) {
+    if (form.value.start_date) {
+      form.value.start_date = form.value.start_date.split('T')[0] + 'T00:00'
+    }
+    if (form.value.end_date) {
+      form.value.end_date = form.value.end_date.split('T')[0] + 'T23:59'
+    }
+  } else {
+    // When switching from all_day to datetime, we can leave the T00:00/T23:59 as is
+    // or just ensure they exist.
+    if (form.value.start_date && !form.value.start_date.includes('T')) {
+      form.value.start_date += 'T00:00'
+    }
+    if (form.value.end_date && !form.value.end_date.includes('T')) {
+      form.value.end_date += 'T23:59'
+    }
+  }
+})
+
 function handleSave() {
   const payload = { ...form.value }
   // Only send what's needed for the backend if we want to be strict, 
@@ -126,7 +146,7 @@ const isNew = computed(() => !form.value.id)
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="sm:max-w-[425px]">
+    <DialogContent class="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle>{{ isNew ? 'Add Event' : 'Edit Event' }}</DialogTitle>
       </DialogHeader>
@@ -153,11 +173,35 @@ const isNew = computed(() => !form.value.id)
         <div class="grid grid-cols-2 gap-4">
           <div class="grid gap-2">
             <Label for="start_date">Start</Label>
-            <Input id="start_date" type="datetime-local" v-model="form.start_date" />
+            <Input 
+              v-if="form.all_day"
+              id="start_date" 
+              type="date" 
+              :model-value="form.start_date.split('T')[0]"
+              @update:model-value="val => { if (val) form.start_date = val + 'T00:00' }"
+            />
+            <Input 
+              v-else
+              id="start_date" 
+              type="datetime-local" 
+              v-model="form.start_date"
+            />
           </div>
           <div class="grid gap-2">
             <Label for="end_date">End</Label>
-            <Input id="end_date" type="datetime-local" v-model="form.end_date" />
+            <Input 
+              v-if="form.all_day"
+              id="end_date" 
+              type="date" 
+              :model-value="form.end_date.split('T')[0]"
+              @update:model-value="val => { if (val) form.end_date = val + 'T23:59' }"
+            />
+            <Input 
+              v-else
+              id="end_date" 
+              type="datetime-local" 
+              v-model="form.end_date"
+            />
           </div>
         </div>
 
