@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { Key } from 'lucide-vue-next';
 import { useEventsStore } from '@/stores/events';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -180,7 +181,11 @@ function handleEventChange(changeInfo: any) {
             </div>
             <div class="flex-1 p-4 overflow-auto">
                 <div class="mb-4 flex justify-between items-center">
-                    <h1 class="text-2xl font-bold text-gray-800">{{ eventsStore.accessKeyDetail.name }} - Calendar</h1>
+                    <h1 class="text-2xl font-bold text-gray-800">{{ eventsStore.calendar?.name }}</h1>
+                    <p class="flex items-center space-x-2" title="Name of key used to access the service">
+                      <Key class="w-4 h-4 text-gray-500"/>
+                      <span>{{ eventsStore.accessKeyDetail.name }}</span>
+                    </p>
                 </div>
                 <FullCalendar :options="calendarOptions" />
             </div>
