@@ -16,7 +16,7 @@ import {
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {Trash2, Plus, Pencil, Key, Copy, Check} from "lucide-vue-next";
+import {Trash2, Plus, Pencil, Key, Copy, Check, ExternalLink} from "lucide-vue-next";
 import ConfirmModal from "@/components/ConfirmModal.vue";
 import {toast} from "vue-sonner";
 
@@ -193,7 +193,10 @@ onMounted(async () => {
               <Pencil class="mr-2 h-3.5 w-3.5" />
               Edit
             </Button>
-            <Button variant="destructive" size="sm" @click="removeAccessKey(key.id)">
+            <Button variant="outline" size="sm" class="h-8 w-8" @click="router.push(`/events/${key.key}`)">
+              <ExternalLink class="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="destructive" size="sm" class="h-8 w-8" @click="removeAccessKey(key.id)">
               <Trash2 class="h-3.5 w-3.5" />
             </Button>
           </div>

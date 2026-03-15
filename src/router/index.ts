@@ -9,8 +9,7 @@ import DashboardLayout from "@/views/DashboardLayout.vue";
 import SubCalendars from "@/views/SubCalendars.vue";
 import CustomEventFields from "@/views/CustomEventFields.vue";
 import AccessKeys from "@/views/AccessKeys.vue";
-
-
+import Events from "@/views/Events.vue";
 
 
 const routes = [
@@ -37,6 +36,10 @@ const routes = [
         path: '/calendars',
         component: Calendars,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/events/:key',
+        component: Events,
     },
 
     // App layout with nested pages (sidebar stays, content swaps)
