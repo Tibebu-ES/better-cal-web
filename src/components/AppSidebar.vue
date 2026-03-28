@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Calendar, ListPlus, LayoutTemplate, GalleryVerticalEnd, Eye } from 'lucide-vue-next'
+import { Calendar, ListPlus, LayoutTemplate, GalleryVerticalEnd, Eye, ChevronUp, User2 } from 'lucide-vue-next'
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +10,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+    SidebarFooter,
 } from '@/components/ui/sidebar'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
+
+const auth = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+  auth.logout()
+  router.push('/login')
+}
 
 // Menu items.
 const items = [
@@ -71,5 +83,30 @@ const items = [
         </SidebarGroupContent>
       </SidebarGroup>
     </SidebarContent>
+    <SidebarFooter>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <SidebarMenuButton>
+                <User2 /> {{ auth.user?.name || 'Username' }}
+                <ChevronUp class="ml-auto" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                side="top"
+                class="w-(--reka-popper-anchor-width)"
+            >
+              <DropdownMenuItem>
+                <span>Account</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="handleLogout">
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarFooter>
   </Sidebar>
 </template>

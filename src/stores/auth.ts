@@ -7,16 +7,27 @@ interface User {
     email: string
 }
 
+ interface Calendar {
+    id: number,
+    name: string,
+    active: boolean,
+    about: string,
+    timezone: string
+    locale: string
+}
+
 interface AuthState {
     user: User | null
     token: string | null
+    defaultCalendar: Calendar | null
 }
 
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
     user: null,
-    token: localStorage.getItem('token')
+    token: localStorage.getItem('token'),
+    defaultCalendar: null
   }),
   actions: {
     async login(data: { email: string; password: string }) {
@@ -24,8 +35,10 @@ export const useAuthStore = defineStore("auth", {
 
       this.user = res.data.user;
       this.token = res.data.token;
+      this.defaultCalendar = res.data.default_calendar;
       // @ts-ignore
       localStorage.setItem('token', this.token);
+      localStorage.setItem("selectedCalendar", String(this.defaultCalendar?.id));
     },
 
       async register( name: string, email: string, password: string ) {
@@ -35,8 +48,10 @@ export const useAuthStore = defineStore("auth", {
 
         this.user = res.data.user;
         this.token = res.data.token;
+        this.defaultCalendar = res.data.default_calendar;
         // @ts-ignore
         localStorage.setItem('token', this.token);
+        localStorage.setItem("selectedCalendar", String(this.defaultCalendar?.id));
       },
       
       logout() {

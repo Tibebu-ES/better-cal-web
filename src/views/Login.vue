@@ -24,7 +24,8 @@ const submit = async () => {
     })
 
     toast.success("Welcome back!")
-    router.push("/calendars")
+    //router.push("/calendars")
+    router.push("/calendar/dashboard")
   } catch (e) {
     toast.error("Invalid credentials")
   }
@@ -39,12 +40,12 @@ const submit = async () => {
       </CardHeader>
 
       <CardContent class="space-y-4">
-        <div>
+        <div class="space-y-2">
           <Label>Email</Label>
           <Input v-model="email" type="email" />
         </div>
 
-        <div>
+        <div class="space-y-2">
           <Label>Password</Label>
           <Input v-model="password" type="password" />
         </div>
@@ -52,6 +53,9 @@ const submit = async () => {
         <Button class="w-full" @click="submit">
           Login
         </Button>
+        <p class="text-center">
+          Don't have an account? <router-link to="/register" class="text-blue-500 hover:underline">Register</router-link>'
+        </p>
       </CardContent>
     </Card>
   </div>

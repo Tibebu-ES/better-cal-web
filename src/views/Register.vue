@@ -20,7 +20,8 @@ const submit = async () => {
   try {
     await auth.register(name.value, email.value, password.value)
     toast.success("Account created successfully!")
-    router.push("/calendars")
+    //router.push("/calendars")
+    router.push("/calendar/dashboard")
   } catch (e) {
     toast.error("Registration failed. Please try again.")
   }
@@ -35,17 +36,17 @@ const submit = async () => {
       </CardHeader>
 
       <CardContent class="space-y-4">
-        <div>
+        <div class="space-y-2">
           <Label>Name</Label>
           <Input v-model="name" />
         </div>
 
-        <div>
+        <div class="space-y-2">
           <Label>Email</Label>
           <Input v-model="email" type="email" />
         </div>
 
-        <div>
+        <div class="space-y-2">
           <Label>Password</Label>
           <Input v-model="password" type="password" />
         </div>
@@ -53,6 +54,9 @@ const submit = async () => {
         <Button class="w-full" @click="submit">
           Create account
         </Button>
+        <p class="text-center">
+          Already have an account? <router-link to="/login" class="text-blue-500 hover:underline">Login</router-link>
+        </p>
       </CardContent>
     </Card>
   </div>
