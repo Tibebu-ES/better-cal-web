@@ -71,7 +71,7 @@ router.beforeEach((to) => {
     }
 
     if (to.meta.guest && auth.token) {
-        return "/calendars"
+        return "/calendar/dashboard"
     }
 })
 

@@ -25,9 +25,9 @@ interface AuthState {
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
-    user: null,
+    user: JSON.parse(localStorage.getItem('user') || 'null'),
     token: localStorage.getItem('token'),
-    defaultCalendar: null
+    defaultCalendar: JSON.parse(localStorage.getItem('defaultCalendar') || 'null')
   }),
   actions: {
     async login(data: { email: string; password: string }) {
@@ -38,6 +38,8 @@ export const useAuthStore = defineStore("auth", {
       this.defaultCalendar = res.data.default_calendar;
       // @ts-ignore
       localStorage.setItem('token', this.token);
+      localStorage.setItem('user', JSON.stringify(this.user));
+      localStorage.setItem('defaultCalendar', JSON.stringify(this.defaultCalendar));
       localStorage.setItem("selectedCalendar", String(this.defaultCalendar?.id));
     },
 
@@ -51,11 +53,15 @@ export const useAuthStore = defineStore("auth", {
         this.defaultCalendar = res.data.default_calendar;
         // @ts-ignore
         localStorage.setItem('token', this.token);
+        localStorage.setItem('user', JSON.stringify(this.user));
+        localStorage.setItem('defaultCalendar', JSON.stringify(this.defaultCalendar));
         localStorage.setItem("selectedCalendar", String(this.defaultCalendar?.id));
       },
       
       logout() {
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('defaultCalendar');
         this.token = null;
         this.user = null;
       }
