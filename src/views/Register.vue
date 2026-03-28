@@ -3,6 +3,8 @@ import { ref } from "vue"
 import { useAuthStore } from "@/stores/auth"
 import { useRouter } from "vue-router"
 
+import Navbar from "@/components/Navbar.vue"
+import Footer from "@/components/Footer.vue"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,35 +31,39 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center">
-    <Card class="w-[400px]">
-      <CardHeader>
-        <CardTitle>Register</CardTitle>
-      </CardHeader>
+  <div class="min-h-screen flex flex-col bg-background text-foreground">
+    <Navbar />
+    <main class="flex-1 flex items-center justify-center py-12">
+      <Card class="w-100">
+        <CardHeader>
+          <CardTitle>Register</CardTitle>
+        </CardHeader>
 
-      <CardContent class="space-y-4">
-        <div class="space-y-2">
-          <Label>Name</Label>
-          <Input v-model="name" />
-        </div>
+        <CardContent class="space-y-4">
+          <div class="space-y-2">
+            <Label>Name</Label>
+            <Input v-model="name" />
+          </div>
 
-        <div class="space-y-2">
-          <Label>Email</Label>
-          <Input v-model="email" type="email" />
-        </div>
+          <div class="space-y-2">
+            <Label>Email</Label>
+            <Input v-model="email" type="email" />
+          </div>
 
-        <div class="space-y-2">
-          <Label>Password</Label>
-          <Input v-model="password" type="password" />
-        </div>
+          <div class="space-y-2">
+            <Label>Password</Label>
+            <Input v-model="password" type="password" />
+          </div>
 
-        <Button class="w-full" @click="submit">
-          Create account
-        </Button>
-        <p class="text-center">
-          Already have an account? <router-link to="/login" class="text-blue-500 hover:underline">Login</router-link>
-        </p>
-      </CardContent>
-    </Card>
+          <Button class="w-full" @click="submit">
+            Create account
+          </Button>
+          <p class="text-center">
+            Already have an account? <router-link to="/login" class="text-blue-500 hover:underline">Login</router-link>
+          </p>
+        </CardContent>
+      </Card>
+    </main>
+    <Footer />
   </div>
 </template>
