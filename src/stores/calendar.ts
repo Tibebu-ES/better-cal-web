@@ -48,6 +48,7 @@ export interface AccessKey {
     active: boolean,
     has_password: boolean,
     password?: string,
+    shared_type: "selected_sub_calendars" | "all_sub_calendars",
     sub_calendar_permissions: SubCalendarPermission[]
 }
 

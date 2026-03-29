@@ -37,6 +37,7 @@ const form = reactive({
   active: true,
   has_password: false,
   password: "",
+  shared_type: "all_sub_calendars" as "selected_sub_calendars" | "all_sub_calendars",
   sub_calendar_permissions: [] as SubCalendarPermission[],
 })
 
@@ -55,6 +56,7 @@ function openCreateDialog() {
   form.active = true
   form.has_password = false
   form.password = ""
+  form.shared_type = "all_sub_calendars"
   initPermissions()
   dialogOpen.value = true
 }
@@ -66,15 +68,30 @@ function openEditDialog(key: AccessKey) {
   form.active = key.active
   form.has_password = key.has_password
   form.password = "" // Don't show old password
+  form.shared_type = key.shared_type || "all_sub_calendars"
   
-  // Map existing permissions, and add defaults for any new sub-calendars
-  form.sub_calendar_permissions = subCalendars.value.map(sub => {
-    const existing = key.sub_calendar_permissions.find(p => p.sub_calendar_id === sub.id);
-    return existing ? { ...existing } : { sub_calendar_id: sub.id, access_type: "read_only" as const };
-  });
+// Map existing permissions, and add defaults for any new sub-calendars
+  form.sub_calendar_permissions = key.sub_calendar_permissions.map(p => ({ ...p }));
   
   dialogOpen.value = true
 }
+
+function removePermission(subCalendarId: number) {
+  form.sub_calendar_permissions = form.sub_calendar_permissions.filter(p => p.sub_calendar_id !== subCalendarId)
+}
+
+function addPermission(subCalendarId: number) {
+  if (form.sub_calendar_permissions.find(p => p.sub_calendar_id === subCalendarId)) return
+  form.sub_calendar_permissions.push({
+    sub_calendar_id: subCalendarId,
+    access_type: "read_only"
+  })
+}
+
+const availableSubCalendars = computed(() => {
+  const selectedIds = form.sub_calendar_permissions.map(p => p.sub_calendar_id)
+  return subCalendars.value.filter(sub => !selectedIds.includes(sub.id))
+})
 
 async function removeAccessKey(id: number) {
   itemToDelete.value = id
@@ -101,7 +118,11 @@ async function submitDialog() {
       name: form.name.trim(),
       active: form.active,
       has_password: form.has_password,
-      sub_calendar_permissions: form.sub_calendar_permissions
+      shared_type: form.shared_type,
+    }
+
+    if (form.shared_type === "selected_sub_calendars") {
+      payload.sub_calendar_permissions = form.sub_calendar_permissions;
     }
     
     if (form.has_password && form.password) {
@@ -184,7 +205,7 @@ onMounted(async () => {
              </div>
              <div class="flex items-center gap-1">
                 <Check class="h-3 w-3" />
-                {{ key.sub_calendar_permissions.length }} sub-calendars
+                {{ key.shared_type === 'all_sub_calendars' ? 'All sub-calendars' : `${key.sub_calendar_permissions.length} sub-calendars` }}
              </div>
           </div>
 
@@ -255,6 +276,19 @@ onMounted(async () => {
           </div>
 
           <div class="space-y-4 pt-2 border-t">
+            <div class="flex items-center justify-between">
+              <div class="space-y-0.5">
+                <Label for="shared_type">Shared Type</Label>
+                <p class="text-[0.8rem] text-muted-foreground">Which sub-calendars are accessible?</p>
+              </div>
+               <select v-model="form.shared_type" id="shared_type" class="w-[200px] flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" >
+                <option value="all_sub_calendars">All sub-calendars</option>
+                <option value="selected_sub_calendars">Selected sub-calendars</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-if="form.shared_type === 'selected_sub_calendars'" class="space-y-4 pt-2 border-t animate-in slide-in-from-top-2 duration-200">
             <div class="space-y-0.5">
                 <Label>Permissions</Label>
                 <p class="text-[0.8rem] text-muted-foreground">Select access level for each sub-calendar.</p>
@@ -266,29 +300,48 @@ onMounted(async () => {
                   <TableRow>
                     <TableHead>Sub-calendar</TableHead>
                     <TableHead class="w-[180px]">Access Level</TableHead>
+                    <TableHead class="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow v-for="sub in subCalendars" :key="sub.id">
+                  <TableRow v-for="permission in form.sub_calendar_permissions" :key="permission.sub_calendar_id">
                     <TableCell class="font-medium">
                       <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: sub.color }"></div>
-                        {{ sub.name }}
+                        <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: subCalendars.find(s => s.id === permission.sub_calendar_id)?.color }"></div>
+                        {{ subCalendars.find(s => s.id === permission.sub_calendar_id)?.name }}
                       </div>
                     </TableCell>
                     <TableCell>
                       <select 
-                        v-model="form.sub_calendar_permissions.find(p => p.sub_calendar_id === sub.id)!.access_type"
+                        v-model="permission.access_type"
                         class="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         <option value="read_only">Read-only</option>
                         <option value="modify">Modify</option>
                       </select>
                     </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground hover:text-destructive" @click="removePermission(permission.sub_calendar_id)">
+                        <Trash2 class="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                  <TableRow v-if="subCalendars.length === 0">
-                    <TableCell colspan="2" class="text-center py-4 text-muted-foreground italic">
-                      No sub-calendars found.
+                  <TableRow v-if="form.sub_calendar_permissions.length === 0">
+                    <TableCell colspan="3" class="text-center py-4 text-muted-foreground italic">
+                      No sub-calendars selected.
+                    </TableCell>
+                  </TableRow>
+                  <TableRow v-if="availableSubCalendars.length > 0">
+                    <TableCell colspan="3" class="p-2">
+                      <select 
+                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        @change="(e: any) => { if(e.target.value) { addPermission(Number(e.target.value)); e.target.value = ''; } }"
+                      >
+                        <option value="">Add sub-calendar...</option>
+                        <option v-for="sub in availableSubCalendars" :key="sub.id" :value="sub.id">
+                          {{ sub.name }}
+                        </option>
+                      </select>
                     </TableCell>
                   </TableRow>
                 </TableBody>
