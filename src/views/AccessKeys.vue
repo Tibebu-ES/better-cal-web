@@ -110,6 +110,10 @@ async function handleConfirmDelete() {
   }
 }
 
+function handleOpenKey(key: string) {
+  window.open(`/events/${key}`, "_blank");
+}
+
 async function submitDialog() {
   if (!form.name.trim()) return
 
@@ -214,8 +218,8 @@ onMounted(async () => {
               <Pencil class="mr-2 h-3.5 w-3.5" />
               Edit
             </Button>
-            <Button variant="outline" size="sm" class="h-8 w-8" @click="router.push(`/events/${key.key}`)">
-              <ExternalLink class="h-3.5 w-3.5" />
+            <Button variant="outline" size="sm" class="h-8 w-8" @click="handleOpenKey(key.key)">
+              <ExternalLink class="h-3.5 w-3.5"/>
             </Button>
             <Button variant="destructive" size="sm" class="h-8 w-8" @click="removeAccessKey(key.id)">
               <Trash2 class="h-3.5 w-3.5" />
