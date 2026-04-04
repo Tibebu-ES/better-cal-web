@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { Key } from 'lucide-vue-next';
+import { Key, Calendar as CalendarIcon, Clock } from 'lucide-vue-next';
 import { useEventsStore } from '@/stores/events';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -17,6 +17,13 @@ const key = route.params.key as string;
 const selectedSubCalendars = ref<number[]>([]);
 const isEventModalOpen = ref(false);
 const selectedEvent = ref<Partial<CalendarEvent> | null>(null);
+
+const hoveredEvent = ref<{
+    event: CalendarEvent;
+    subCalendarName: string;
+    x: number;
+    y: number;
+} | null>(null);
 
 const subCalendarsWithModifyPermission = computed(() => {
     const permissions = eventsStore.accessKeyDetail?.sub_calendar_permissions || [];
@@ -71,8 +78,70 @@ const calendarOptions = computed(() => ({
     }),
     select: handleDateSelect,
     eventClick: handleEventClick,
-    eventChange: handleEventChange
+    eventChange: handleEventChange,
+    eventMouseEnter: handleEventMouseEnter,
+    eventMouseLeave: handleEventMouseLeave
 }));
+
+function handleEventMouseEnter(mouseEnterInfo: any) {
+    const eventId = parseInt(mouseEnterInfo.event.id);
+    const event = eventsStore.events.find(e => e.id === eventId);
+    if (!event) return;
+
+    const subCal = eventsStore.subCalendars.find(s => s.id === event.sub_calendar_id);
+    
+    hoveredEvent.value = {
+        event,
+        subCalendarName: subCal?.name || 'Unknown',
+        x: mouseEnterInfo.jsEvent.clientX,
+        y: mouseEnterInfo.jsEvent.clientY
+    };
+}
+
+function handleEventMouseLeave() {
+    hoveredEvent.value = null;
+}
+
+function formatDate(startDateStr: string, endDateStr: string, allDay: boolean) {
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    if (isNaN(start.getTime())) return startDateStr;
+    
+    const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'short',
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    };
+    
+    if (allDay) {
+        const startFormatted = start.toLocaleDateString(undefined, options);
+        const endFormatted = end.toLocaleDateString(undefined, options);
+        
+        if (startFormatted === endFormatted) {
+            return startFormatted;
+        }
+        return `${startFormatted} - ${endFormatted}`;
+    } else {
+        const timeOptions: Intl.DateTimeFormatOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        };
+
+        const startDateFormatted = start.toLocaleDateString(undefined, options);
+        const endDateFormatted = end.toLocaleDateString(undefined, options);
+        const startTimeFormatted = start.toLocaleTimeString(undefined, timeOptions).toUpperCase();
+        const endTimeFormatted = end.toLocaleTimeString(undefined, timeOptions).toUpperCase();
+
+        if (startDateFormatted === endDateFormatted) {
+            return `${startDateFormatted}, ${startTimeFormatted} - ${endTimeFormatted}`;
+        }
+        
+        return `${startDateFormatted}, ${startTimeFormatted} - ${endDateFormatted}, ${endTimeFormatted}`;
+    }
+}
+
 
 function handleDateSelect(selectInfo: any) {
     // Check if any sub-calendar has 'modify' permission
@@ -190,6 +259,53 @@ function handleEventChange(changeInfo: any) {
                 <FullCalendar :options="calendarOptions" />
             </div>
         </div>
+
+        <!-- Event Hover Tooltip -->
+        <div 
+            v-if="hoveredEvent"
+            class="fixed z-[100] pointer-events-none bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-96 transform -translate-x-1/2 -translate-y-[calc(100%+10px)]"
+            :style="{ 
+                left: `${hoveredEvent.x}px`, 
+                top: `${hoveredEvent.y}px`
+            }"
+        >
+            <h3 class="font-bold text-gray-900 mb-2">{{ hoveredEvent.event.title }}</h3>
+
+            <div class="flex items-center text-xs text-gray-500 mb-2">
+              <Clock class="w-3 h-3 mr-1" />
+              <span>{{ formatDate(hoveredEvent.event.start_date, hoveredEvent.event.end_date, hoveredEvent.event.all_day) }}</span>
+            </div>
+
+            <div class="font-bold flex items-center text-xs text-gray-900 mb-2">
+                <CalendarIcon class="w-3 h-3 mr-1" />
+                <span>{{ hoveredEvent.subCalendarName }}</span>
+            </div>
+
+            <div v-if="hoveredEvent.event.custom_event_fields?.length" class="mt-2 pt-2 border-t border-gray-100 space-y-2">
+                <div v-for="field in hoveredEvent.event.custom_event_fields" :key="field.id" class="text-xs">
+
+                    <div class="flex items-center flex-wrap gap-1">
+                      <span class="font-bold text-gray-900 block mb-1">{{ field.name }}:</span>
+                        <template v-if="field.type === 'text'">
+                            <span v-if="field.value" class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full border border-gray-200">
+                                {{ field.value }}
+                            </span>
+                        </template>
+                        <template v-else-if="field.type === 's_select'">
+                            <span v-if="field.option" class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                                {{ field.option.name }}
+                            </span>
+                        </template>
+                        <template v-else-if="field.type === 'm_select'">
+                            <span v-for="option in field.options" :key="option.id" class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                                {{ option.name }}
+                            </span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <EventModal 
             v-model:open="isEventModalOpen"
             :event="selectedEvent"
