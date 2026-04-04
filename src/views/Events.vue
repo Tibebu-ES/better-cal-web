@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { Key, Calendar as CalendarIcon, Clock } from 'lucide-vue-next';
+import {Key, Calendar as CalendarIcon, Clock, LucideLock, Calendar} from 'lucide-vue-next';
 import { useEventsStore } from '@/stores/events';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -42,6 +42,22 @@ const subCalendarsWithModifyPermission = computed(() => {
 
 
 });
+
+const hasModifyPermissionToSubCalendar = (subCalendarId: number) => {
+  let hasPermissionToModify = false;
+
+  if (eventsStore.accessKeyDetail?.shared_type === 'selected_sub_calendars') {
+    const permission = eventsStore.accessKeyDetail?.sub_calendar_permissions.find(p => p.sub_calendar_id === subCalendarId);
+    hasPermissionToModify = permission?.access_type === 'modify';
+  } else if (
+      eventsStore.accessKeyDetail?.shared_type === 'all_sub_calendars' &&
+      eventsStore.accessKeyDetail?.role === 'modify'
+  ) {
+    hasPermissionToModify = true;
+  }
+
+  return hasPermissionToModify;
+};
 
 onMounted(async () => {
     await eventsStore.initialize(key);
@@ -188,13 +204,8 @@ function handleEventClick(clickInfo: any) {
     if (!event) return;
 
     //if key has no permission to modify this event
-    let hasPermissionToModify = false;
-    if(eventsStore.accessKeyDetail?.shared_type === 'selected_sub_calendars'){
-      const permission = eventsStore.accessKeyDetail?.sub_calendar_permissions.find(p => p.sub_calendar_id === event.sub_calendar_id);
-      hasPermissionToModify = permission?.access_type === 'modify';
-    }else if(eventsStore.accessKeyDetail?.shared_type === 'all_sub_calendars' && eventsStore.accessKeyDetail?.role === 'modify'  ){
-      hasPermissionToModify = true;
-    }
+    let hasPermissionToModify = hasModifyPermissionToSubCalendar(event.sub_calendar_id);
+    
 
     if (!hasPermissionToModify) {
       return;
@@ -229,32 +240,40 @@ function handleDeleteEvent(id: number) {
             Invalid Access Key or unauthorized access.
         </div>
         <div v-else class="flex-1 flex overflow-hidden">
+            <!--left sidebar-->
             <div class="w-64 bg-gray-50 border-r p-4 overflow-y-auto hidden md:block">
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">Sub-calendars</h2>
+                <div class="flex items-center gap-2 mb-8">
+                  <CalendarIcon class="h-6 w-6 text-primary" />
+                  <span class="text-xl font-bold tracking-tight">BetterCal</span>
+                </div>
+                <p class="text-sm font-semibold mb-2 text-gray-500 tracking-tight">Sub-calendars</p>
                 <div class="space-y-2">
                     <div 
                         v-for="subCal in eventsStore.subCalendars" 
                         :key="subCal.id"
-                        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                        class="flex items-center space-x-1 cursor-pointer text-white p-1 rounded relative"
+
                         @click="toggleSubCalendar(subCal.id)"
-                    >
-                        <div 
-                            class="w-4 h-4 rounded-sm flex-shrink-0"
-                            :style="{ 
+                        :style="{
                                 backgroundColor: subCal.color,
-                                border: selectedSubCalendars.includes(subCal.id) ? '2px solid #374151' : '1px solid #d1d5db',
                                 opacity: selectedSubCalendars.includes(subCal.id) ? 1 : 0.4
                             }"
-                        ></div>
+                        :class="{ 'with-overlay': !selectedSubCalendars.includes(subCal.id) }"
+                    >
+                      
+                      <LucideLock
+                          v-if="!hasModifyPermissionToSubCalendar(subCal.id)"
+                          class="h-4 w-4  flex-shrink-0"
+                      />
                         <span 
-                            class="text-sm truncate"
-                            :class="{ 'text-gray-400': !selectedSubCalendars.includes(subCal.id), 'text-gray-700 font-medium': selectedSubCalendars.includes(subCal.id) }"
+                            class="text-sm truncate "
                         >
                             {{ subCal.name }}
                         </span>
                     </div>
                 </div>
             </div>
+            <!--          content with the events-->
             <div class="flex-1 p-4 overflow-auto">
                 <div class="mb-4 flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-gray-800">{{ eventsStore.calendar?.name }}</h1>
@@ -329,5 +348,18 @@ function handleDeleteEvent(id: number) {
 .fc {
     max-width: 100%;
     height: 100%;
+}
+
+.with-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0.3) 10px, transparent 10px, transparent 20px);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
 }
 </style>
