@@ -16,6 +16,8 @@ const key = route.params.key as string;
 
 const selectedSubCalendars = ref<number[]>([]);
 const isEventModalOpen = ref(false);
+const canModifyEvents = ref(false);
+const canDeleteEvents = ref(false);
 const selectedEvent = ref<Partial<CalendarEvent> | null>(null);
 
 const hoveredEvent = ref<{
@@ -26,11 +28,19 @@ const hoveredEvent = ref<{
 } | null>(null);
 
 const subCalendarsWithModifyPermission = computed(() => {
-    const permissions = eventsStore.accessKeyDetail?.sub_calendar_permissions || [];
-    const modifyIds = permissions
-        .filter(p => p.access_type === 'modify')
-        .map(p => p.sub_calendar_id);
-    return eventsStore.subCalendars.filter(s => modifyIds.includes(s.id));
+    if(eventsStore.accessKeyDetail?.shared_type === 'all_sub_calendars' && eventsStore.accessKeyDetail?.role === 'modify'  ){
+      return eventsStore.subCalendars;
+    }else if(eventsStore.accessKeyDetail?.shared_type === 'selected_sub_calendars'){
+      const permissions = eventsStore.accessKeyDetail?.sub_calendar_permissions || [];
+      const modifyIds = permissions
+          .filter(p => p.access_type === 'modify')
+          .map(p => p.sub_calendar_id);
+      return eventsStore.subCalendars.filter(s => modifyIds.includes(s.id));
+    }else{
+      return [];
+    }
+
+
 });
 
 onMounted(async () => {
@@ -78,7 +88,6 @@ const calendarOptions = computed(() => ({
     }),
     select: handleDateSelect,
     eventClick: handleEventClick,
-    eventChange: handleEventChange,
     eventMouseEnter: handleEventMouseEnter,
     eventMouseLeave: handleEventMouseLeave
 }));
@@ -143,13 +152,16 @@ function formatDate(startDateStr: string, endDateStr: string, allDay: boolean) {
 }
 
 
+/**
+ * Handles date selection in the calendar. for adding new event
+ * @param selectInfo
+ */
 function handleDateSelect(selectInfo: any) {
     // Check if any sub-calendar has 'modify' permission
-    const canModify = eventsStore.accessKeyDetail?.sub_calendar_permissions.some(p => p.access_type === 'modify');
-    if (!canModify) {
-        alert("You don't have permission to add events.");
-        return;
+    if (subCalendarsWithModifyPermission.value.length === 0) {
+      return;
     }
+
 
     selectedEvent.value = {
         title: '',
@@ -159,24 +171,38 @@ function handleDateSelect(selectInfo: any) {
         sub_calendar_id: subCalendarsWithModifyPermission.value[0]?.id
     };
     isEventModalOpen.value = true;
+    canModifyEvents.value = true;
+
     
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 }
 
+/**
+ * Handles event click in the calendar. for editing existing event
+ * @param clickInfo
+ */
 function handleEventClick(clickInfo: any) {
     const eventId = parseInt(clickInfo.event.id);
     const event = eventsStore.events.find(e => e.id === eventId);
     if (!event) return;
 
-    const permission = eventsStore.accessKeyDetail?.sub_calendar_permissions.find(p => p.sub_calendar_id === event.sub_calendar_id);
-    
-    if (permission?.access_type !== 'modify') {
-        alert("You don't have permission to modify this event.");
-        return;
+    //if key has no permission to modify this event
+    let hasPermissionToModify = false;
+    if(eventsStore.accessKeyDetail?.shared_type === 'selected_sub_calendars'){
+      const permission = eventsStore.accessKeyDetail?.sub_calendar_permissions.find(p => p.sub_calendar_id === event.sub_calendar_id);
+      hasPermissionToModify = permission?.access_type === 'modify';
+    }else if(eventsStore.accessKeyDetail?.shared_type === 'all_sub_calendars' && eventsStore.accessKeyDetail?.role === 'modify'  ){
+      hasPermissionToModify = true;
     }
 
+    if (!hasPermissionToModify) {
+      return;
+    }
+
+
     selectedEvent.value = { ...event };
+    canModifyEvents.value = canDeleteEvents.value = hasPermissionToModify;
     isEventModalOpen.value = true;
 }
 
@@ -192,25 +218,6 @@ function handleDeleteEvent(id: number) {
     eventsStore.deleteEvent(id);
 }
 
-function handleEventChange(changeInfo: any) {
-    const eventId = parseInt(changeInfo.event.id);
-    const event = eventsStore.events.find(e => e.id === eventId);
-    if (!event) return;
-
-    const permission = eventsStore.accessKeyDetail?.sub_calendar_permissions.find(p => p.sub_calendar_id === event.sub_calendar_id);
-    
-    if (permission?.access_type !== 'modify') {
-        alert("You don't have permission to modify this event. Reverting change.");
-        changeInfo.revert();
-        return;
-    }
-
-    eventsStore.updateEvent(eventId, {
-        start_date: changeInfo.event.startStr,
-        end_date: changeInfo.event.endStr,
-        all_day: changeInfo.event.allDay
-    });
-}
 </script>
 
 <template>
@@ -310,7 +317,8 @@ function handleEventChange(changeInfo: any) {
             v-model:open="isEventModalOpen"
             :event="selectedEvent"
             :sub-calendars="subCalendarsWithModifyPermission"
-            can-delete
+            :can-delete="canDeleteEvents"
+            :can-modify="canModifyEvents"
             @save="handleSaveEvent"
             @delete="handleDeleteEvent"
         />

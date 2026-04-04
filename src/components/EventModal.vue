@@ -20,6 +20,7 @@ interface Props {
   event: Partial<CalendarEvent> | null
   subCalendars: SubCalendar[]
   canDelete?: boolean
+  canModify?: boolean
 }
 
 const props = defineProps<Props>()
@@ -151,7 +152,7 @@ const isNew = computed(() => !form.value.id)
         <DialogTitle>{{ isNew ? 'Add Event' : 'Edit Event' }}</DialogTitle>
       </DialogHeader>
       
-      <div class="grid gap-4 py-4">
+      <div class="grid gap-4 py-4" >
         <div class="grid gap-2">
           <Label for="title">Title</Label>
           <Input id="title" v-model="form.title" placeholder="Event title" />
@@ -248,6 +249,8 @@ const isNew = computed(() => !form.value.id)
           </template>
         </div>
       </div>
+      
+      
 
       <DialogFooter class="flex justify-between items-center sm:justify-between">
         <div>
@@ -259,7 +262,7 @@ const isNew = computed(() => !form.value.id)
             <Button variant="outline" @click="emit('update:open', false)">
               Cancel
             </Button>
-            <Button @click="handleSave">
+            <Button v-if="canModify" @click="handleSave">
               Save
             </Button>
         </div>

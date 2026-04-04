@@ -16,7 +16,7 @@ import {
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {Trash2, Plus, Pencil, Key, Copy, Check, ExternalLink} from "lucide-vue-next";
+import {Trash2, Plus, Pencil, Key, Copy, Check, ExternalLink, LucideDotSquare} from "lucide-vue-next";
 import ConfirmModal from "@/components/ConfirmModal.vue";
 import {toast} from "vue-sonner";
 
@@ -38,6 +38,7 @@ const form = reactive({
   has_password: false,
   password: "",
   shared_type: "all_sub_calendars" as "selected_sub_calendars" | "all_sub_calendars",
+  role: "read_only" as "read_only" | "modify",
   sub_calendar_permissions: [] as SubCalendarPermission[],
 })
 
@@ -56,7 +57,8 @@ function openCreateDialog() {
   form.active = true
   form.has_password = false
   form.password = ""
-  form.shared_type = "all_sub_calendars"
+  form.shared_type = "all_sub_calendars", 
+  form.role = "read_only"
   initPermissions()
   dialogOpen.value = true
 }
@@ -68,7 +70,8 @@ function openEditDialog(key: AccessKey) {
   form.active = key.active
   form.has_password = key.has_password
   form.password = "" // Don't show old password
-  form.shared_type = key.shared_type || "all_sub_calendars"
+  form.shared_type = key.shared_type || "all_sub_calendars",
+  form.role = key.role || "read_only"
   
 // Map existing permissions, and add defaults for any new sub-calendars
   form.sub_calendar_permissions = key.sub_calendar_permissions.map(p => ({ ...p }));
@@ -127,6 +130,8 @@ async function submitDialog() {
 
     if (form.shared_type === "selected_sub_calendars") {
       payload.sub_calendar_permissions = form.sub_calendar_permissions;
+    }else if(form.shared_type === "all_sub_calendars"){//role is access_type for all the sub-calendars
+      payload.role = form.role;
     }
     
     if (form.has_password && form.password) {
@@ -211,6 +216,11 @@ onMounted(async () => {
                 <Check class="h-3 w-3" />
                 {{ key.shared_type === 'all_sub_calendars' ? 'All sub-calendars' : `${key.sub_calendar_permissions.length} sub-calendars` }}
              </div>
+            <div v-if="key.shared_type === 'all_sub_calendars'" class="flex items-center gap-1">
+              <LucideDotSquare class="h-3 w-3"/>
+              {{ key.role === 'read_only' ? 'Read-only' : 'Modify' }}
+            </div>
+
           </div>
 
           <div class="mt-4 flex gap-2">
@@ -291,6 +301,20 @@ onMounted(async () => {
               </select>
             </div>
           </div>
+
+          <div v-if="form.shared_type === 'all_sub_calendars'" class="space-y-4 pt-2 border-t">
+            <div class="flex items-center justify-between">
+              <div class="space-y-0.5">
+                <Label for="role">Permission</Label>
+                <p class="text-[0.8rem] text-muted-foreground">Select access level for all sub-calendars.</p>
+              </div>
+              <select v-model="form.role" id="role" class="w-[200px] flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" >
+                <option value="read_only">Read-only</option>
+                <option value="modify">Modify</option>
+              </select>
+            </div>
+          </div>
+
 
           <div v-if="form.shared_type === 'selected_sub_calendars'" class="space-y-4 pt-2 border-t animate-in slide-in-from-top-2 duration-200">
             <div class="space-y-0.5">
