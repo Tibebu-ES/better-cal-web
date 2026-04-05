@@ -4,9 +4,26 @@ import router from "@/router"
 import { useCalendarStore, type SubCalendar } from "@/stores/calendar"
 import ConfirmModal from "@/components/ConfirmModal.vue"
 import { toast } from "vue-sonner"
-import { Plus, Pencil, Trash2, Check, X } from "lucide-vue-next"
+import { Plus, Pencil, Trash2, Check, X, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, MoreHorizontal } from "lucide-vue-next"
+
+import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -17,6 +34,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationFirst,
+  PaginationItem,
+  PaginationLast,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import {
   Table,
   TableBody,
@@ -29,7 +56,16 @@ import {
 const calendarStore = useCalendarStore()
 
 const subCalendars = computed(() => calendarStore.subCalendars)
+const pagination = computed(() => calendarStore.pagination)
 const selectedCalendar = computed(() => calendarStore.selectedCalendar)
+
+const currentPage = ref(1)
+
+async function changePage(page: number) {
+  if (page < 1 || (pagination.value && page > pagination.value.last_page)) return
+  currentPage.value = page
+  await calendarStore.loadSubCalendars(page)
+}
 
 const dialogOpen = ref(false)
 const confirmOpen = ref(false)
@@ -78,6 +114,8 @@ async function submitDialog() {
     if (dialogMode.value === "create") {
       await calendarStore.createSubCalendar(payload)
       toast.success("Sub-calendar created successfully")
+      // Reload current page to see changes
+      await calendarStore.loadSubCalendars(currentPage.value)
     } else if (editingId.value != null) {
       await calendarStore.updateSubCalendar(editingId.value, payload)
       toast.success("Sub-calendar updated successfully")
@@ -99,6 +137,12 @@ async function handleConfirmDelete() {
       await calendarStore.deleteSubCalendar(itemToDelete.value)
       toast.success("Sub-calendar deleted successfully")
       itemToDelete.value = null
+      // Reload current page. If current page becomes empty, go to previous page
+      if (subCalendars.value.length === 0 && currentPage.value > 1) {
+        await changePage(currentPage.value - 1)
+      } else {
+        await calendarStore.loadSubCalendars(currentPage.value)
+      }
     } catch (e) {
       toast.error("Failed to delete sub-calendar")
     }
@@ -110,86 +154,193 @@ onMounted(async () => {
   if (!selectedCalendarId) return router.push("/calendars")
 
   await calendarStore.loadSelectedCalendar(Number(selectedCalendarId))
-  await calendarStore.loadSubCalendars()
+  await calendarStore.loadSubCalendars(currentPage.value)
 })
 </script>
 
 <template>
   <div class="space-y-8 p-4">
-    <div class="flex items-center justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="space-y-1">
         <h2 class="text-3xl font-bold tracking-tight">Sub-calendars</h2>
-        <p class="text-sm text-muted-foreground">
+        <p class="text-muted-foreground">
           Manage sub-calendars for
-          <span class="font-medium">{{ selectedCalendar?.name ?? "…" }}</span>
+          <span class="font-medium text-foreground underline decoration-primary/30 decoration-2 underline-offset-4">
+            {{ selectedCalendar?.name ?? "…" }}
+          </span>
         </p>
       </div>
 
-      <Button @click="openCreateDialog">
-        <Plus class="mr-2 h-4 w-4" />
-        Add sub-calendar
-      </Button>
+      <div class="flex items-center gap-3">
+        <Button @click="openCreateDialog" class="shadow-sm">
+          <Plus class="mr-2 h-4 w-4" />
+          Add sub-calendar
+        </Button>
+      </div>
     </div>
 
-    <div class="rounded-lg border">
+    <div class="rounded-lg border shadow-sm overflow-hidden">
       <Table>
-        <TableHeader>
+        <TableHeader class="bg-muted/50">
           <TableRow>
-            <TableHead class="w-[44%]">Name</TableHead>
-            <TableHead class="w-[16%]">Color</TableHead>
-            <TableHead class="w-[16%]">Overlap</TableHead>
-            <TableHead class="w-[12%]">Active</TableHead>
-            <TableHead class="w-[12%]" />
+            <TableHead class="w-[40%]">Name</TableHead>
+            <TableHead class="w-[18%] text-center">Color</TableHead>
+            <TableHead class="w-[15%] text-center">Overlap</TableHead>
+            <TableHead class="w-[15%] text-center">Active</TableHead>
+            <TableHead class="w-[12%] text-right pr-6">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          <TableRow v-for="sub in subCalendars" :key="sub.id">
-            <TableCell class="font-medium">{{ sub.name }}</TableCell>
-
+          <TableRow v-for="sub in subCalendars" :key="sub.id" class="group transition-colors">
             <TableCell>
-              <div class="flex items-center gap-2">
-                <span
-                  class="inline-block size-4 rounded-sm border"
-                  :style="{ backgroundColor: sub.color }"
-                />
-                <span class="text-xs text-muted-foreground">{{ sub.color }}</span>
+              <div class="flex flex-col">
+                <span class="font-semibold text-foreground">{{ sub.name }}</span>
               </div>
             </TableCell>
 
             <TableCell>
-              <Check v-if="sub.overlap" class="h-4 w-4 text-green-500" />
-              <X v-else class="h-4 w-4 text-muted-foreground" />
+              <div class="flex items-center justify-center gap-2">
+                <span
+                  class="inline-block size-5 rounded-full border shadow-sm ring-1 ring-border"
+                  :style="{ backgroundColor: sub.color }"
+                />
+                <code class="text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                  {{ sub.color.toUpperCase() }}
+                </code>
+              </div>
             </TableCell>
 
-            <TableCell>
-              <Check v-if="sub.active" class="h-4 w-4 text-green-500" />
-              <X v-else class="h-4 w-4 text-muted-foreground" />
+            <TableCell class="text-center">
+              <Badge
+                :variant="sub.overlap ? 'default' : 'secondary'"
+                class="px-2 py-0.5 capitalize font-normal"
+              >
+                {{ sub.overlap ? 'Allowed' : 'Blocked' }}
+              </Badge>
             </TableCell>
 
-            <TableCell>
-              <div class="flex justify-end gap-2">
-                <Button variant="outline" size="icon" @click="openEditDialog(sub)">
-                  <Pencil class="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  @click="removeSubCalendar(sub.id)"
-                >
-                  <Trash2 class="h-4 w-4" />
-                </Button>
+            <TableCell class="text-center">
+              <Badge
+                :variant="sub.active ? 'outline' : 'secondary'"
+                :class="[
+                  sub.active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'opacity-50',
+                  'px-2 py-0.5 capitalize font-normal'
+                ]"
+              >
+                {{ sub.active ? 'Active' : 'Inactive' }}
+              </Badge>
+            </TableCell>
+
+            <TableCell class="text-right pr-4">
+              <div class="flex justify-end items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        @click="openEditDialog(sub)"
+                      >
+                        <Pencil class="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit sub-calendar</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    >
+                      <MoreHorizontal class="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" class="w-40">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem @click="openEditDialog(sub)">
+                      <Pencil class="mr-2 h-3.5 w-3.5" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      class="text-destructive focus:text-destructive"
+                      @click="removeSubCalendar(sub.id)"
+                    >
+                      <Trash2 class="mr-2 h-3.5 w-3.5" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </TableCell>
           </TableRow>
 
           <TableRow v-if="subCalendars.length === 0">
-            <TableCell colspan="5" class="py-10 text-center text-muted-foreground">
-              No sub-calendars yet.
+            <TableCell colspan="5" class="py-20 text-center">
+              <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="rounded-full bg-muted p-4">
+                  <Plus class="h-8 w-8 text-muted-foreground/50" />
+                </div>
+                <div class="space-y-1">
+                  <p class="font-medium">No sub-calendars yet</p>
+                  <p class="text-sm text-muted-foreground">
+                    Get started by creating your first sub-calendar.
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" @click="openCreateDialog" class="mt-2">
+                  Add first sub-calendar
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         </TableBody>
       </Table>
+    </div>
+
+    <div v-if="pagination && pagination.last_page > 1" class="flex items-center justify-between px-2">
+      <div class="text-sm text-muted-foreground">
+        Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} sub-calendars
+      </div>
+      <Pagination
+        v-slot="{ page }"
+        v-model:page="currentPage"
+        :total="pagination.total"
+        :items-per-page="pagination.per_page"
+        :sibling-count="1"
+        show-edges
+        @update:page="changePage"
+        class="flex-none w-auto mx-0"
+      >
+        <PaginationContent v-slot="{ items }" class="flex items-center gap-1">
+          <PaginationFirst >
+            <ChevronsLeft class="h-4 w-4 " />
+          </PaginationFirst>
+          <PaginationPrevious>
+            <ChevronLeft class="h-4 w-4" />
+          </PaginationPrevious>
+
+          <template v-for="(item, index) in items">
+            <PaginationItem v-if="item.type === 'page'" :key="index" :value="item.value" as-child>
+              <Button class="h-9 w-9 p-0" :variant="item.value === page ? 'default' : 'outline'">
+                {{ item.value }}
+              </Button>
+            </PaginationItem>
+            <PaginationEllipsis v-else :key="item.type" :index="index" />
+          </template>
+
+          <PaginationNext>
+            <ChevronRight class="h-4 w-4" />
+          </PaginationNext>
+          <PaginationLast>
+            <ChevronsRight class="h-4 w-4" />
+          </PaginationLast>
+        </PaginationContent>
+      </Pagination>
     </div>
 
     <Dialog v-model:open="dialogOpen">
@@ -201,52 +352,55 @@ onMounted(async () => {
           </DialogDescription>
         </DialogHeader>
 
-        <div class="grid gap-4 py-2">
+        <div class="grid gap-5 py-4">
           <div class="grid gap-2">
-            <Label for="sub-name">Name</Label>
+            <Label for="sub-name" class="text-sm font-semibold">Name</Label>
             <Input
               id="sub-name"
               v-model="form.name"
               placeholder="e.g. Work, Personal, Holidays"
+              class="h-10"
             />
           </div>
 
           <div class="grid gap-2">
-            <Label for="sub-color">Color</Label>
+            <Label for="sub-color" class="text-sm font-semibold">Color</Label>
             <div class="flex items-center gap-3">
-              <input
-                id="sub-color"
+              <div class="relative flex items-center">
+                <input
+                  id="sub-color"
+                  v-model="form.color"
+                  type="color"
+                  class="h-10 w-12 cursor-pointer rounded-md border bg-background p-1 shadow-sm transition-hover hover:bg-accent"
+                />
+              </div>
+              <Input
                 v-model="form.color"
-                type="color"
-                class="h-9 w-14 rounded-md border bg-background px-1"
+                class="font-mono uppercase h-10"
+                placeholder="#000000"
               />
-              <Input v-model="form.color" class="max-w-[180px]" />
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-md border p-3">
+          <div class="flex flex-row items-center justify-between rounded-lg border bg-muted/30 p-4 shadow-sm">
             <div class="space-y-0.5">
-              <div class="text-sm font-medium">Overlap</div>
-              <div class="text-xs text-muted-foreground">
-                Allow events in this sub-calendar to overlap.
-              </div>
+              <Label for="sub-overlap" class="text-sm font-semibold cursor-pointer">Allow Overlap</Label>
+              <p class="text-[12px] text-muted-foreground leading-tight">
+                Permit multiple events at the same time in this calendar.
+              </p>
             </div>
-
-            <label class="flex items-center gap-2 text-sm">
-              <input
-                v-model="form.overlap"
-                type="checkbox"
-                class="size-4 rounded border"
-              />
-              <span>{{ form.overlap ? "Enabled" : "Disabled" }}</span>
-            </label>
+            <Checkbox
+              id="sub-overlap"
+              :checked="form.overlap"
+              @update:checked="form.overlap = $event"
+            />
           </div>
         </div>
 
-        <DialogFooter class="gap-2">
-          <Button variant="outline" @click="dialogOpen = false">Cancel</Button>
-          <Button @click="submitDialog">
-            {{ dialogMode === "create" ? "Create" : "Save changes" }}
+        <DialogFooter class="gap-2 sm:gap-0">
+          <Button variant="ghost" @click="dialogOpen = false" class="mr-auto">Cancel</Button>
+          <Button @click="submitDialog" class="px-8 shadow-sm">
+            {{ dialogMode === "create" ? "Create Sub-calendar" : "Save Changes" }}
           </Button>
         </DialogFooter>
       </DialogContent>

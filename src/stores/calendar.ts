@@ -56,9 +56,26 @@ export interface AccessKey {
 
 
 
+export interface Pagination {
+    current_page: number,
+    data: any[],
+    first_page_url: string,
+    from: number,
+    last_page: number,
+    last_page_url: string,
+    links: { url: string | null, label: string, active: boolean }[],
+    next_page_url: string | null,
+    path: string,
+    per_page: number,
+    prev_page_url: string | null,
+    to: number,
+    total: number
+}
+
 interface CalendarState {
     selectedCalendar: Calendar | null
     subCalendars: SubCalendar[],
+    pagination: Pagination | null,
     customEventFields: CustomEventField[],
     accessKeys: AccessKey[],
     loading: boolean
@@ -69,6 +86,7 @@ export const useCalendarStore = defineStore("calendar", {
     state: (): CalendarState => ({
         selectedCalendar: null,
         subCalendars: [],
+        pagination: null,
         customEventFields: [],
         accessKeys: [],
         loading: false
@@ -82,10 +100,13 @@ export const useCalendarStore = defineStore("calendar", {
             this.loading = false;
         },
 
-        async loadSubCalendars() {
+        async loadSubCalendars(page: number = 1, perPage: number = 10) {
             if (!this.selectedCalendar) return;
-            const res = await api.get(`/v1/calendars/${this.selectedCalendar.id}/sub-calendars`);
+            const res = await api.get(`/v1/calendars/${this.selectedCalendar.id}/sub-calendars`, {
+                params: { page, per_page: perPage }
+            });
             this.subCalendars = res.data.data;
+            this.pagination = res.data;
         },
 
         async createSubCalendar(SubCalendar: {name: string, color: string, overlap: boolean}) {
@@ -168,6 +189,7 @@ export const useCalendarStore = defineStore("calendar", {
         clear() {
             this.selectedCalendar = null;
             this.subCalendars = [];
+            this.pagination = null;
             this.customEventFields = [];
             this.accessKeys = [];
         }
