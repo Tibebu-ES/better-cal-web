@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import {Key, Calendar as CalendarIcon, Clock, LucideLock} from 'lucide-vue-next';
+import {Key, Calendar as CalendarIcon, Clock, LucideLock, ChevronDown, ChevronRight} from 'lucide-vue-next';
 import Logo from '@/components/Logo.vue';
 import { useEventsStore } from '@/stores/events';
 import FullCalendar from '@fullcalendar/vue3';
@@ -9,7 +9,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import EventModal from '@/components/EventModal.vue';
+import { Calendar } from '@/components/ui/calendar';
+import { toDate } from 'reka-ui/date';
 import type { CalendarEvent } from '@/stores/events';
+import type { DateValue } from 'reka-ui';
 
 const route = useRoute();
 const eventsStore = useEventsStore();
@@ -20,6 +23,9 @@ const isEventModalOpen = ref(false);
 const canModifyEvents = ref(false);
 const canDeleteEvents = ref(false);
 const selectedEvent = ref<Partial<CalendarEvent> | null>(null);
+const fullCalendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
+const selectedDate = ref<DateValue>();
+const isSubCalendarsExpanded = ref(true);
 
 const hoveredEvent = ref<{
     event: CalendarEvent;
@@ -230,6 +236,13 @@ function handleDeleteEvent(id: number) {
     eventsStore.deleteEvent(id);
 }
 
+watch(selectedDate, (newDate) => {
+    if (newDate && fullCalendarRef.value) {
+        const calendarApi = fullCalendarRef.value.getApi();
+        calendarApi.gotoDate(toDate(newDate));
+    }
+});
+
 </script>
 
 <template>
@@ -242,47 +255,73 @@ function handleDeleteEvent(id: number) {
         </div>
         <div v-else class="flex-1 flex overflow-hidden">
             <!--left sidebar-->
-            <div class="w-64 bg-gray-50 border-r p-4 overflow-y-auto hidden md:block">
-                <div class="mb-8">
-                  <Logo />
-                </div>
-                <p class="text-sm font-semibold mb-2 text-gray-500 tracking-tight">Sub-calendars</p>
-                <div class="space-y-2">
-                    <div 
-                        v-for="subCal in eventsStore.subCalendars" 
-                        :key="subCal.id"
-                        class="flex items-center space-x-1 cursor-pointer text-white p-1 rounded relative"
-
-                        @click="toggleSubCalendar(subCal.id)"
-                        :style="{
-                                backgroundColor: subCal.color,
-                                opacity: selectedSubCalendars.includes(subCal.id) ? 1 : 0.4
-                            }"
-                        :class="{ 'with-overlay': !selectedSubCalendars.includes(subCal.id) }"
-                    >
-                      
-                      <LucideLock
-                          v-if="!hasModifyPermissionToSubCalendar(subCal.id)"
-                          class="h-4 w-4  flex-shrink-0"
-                      />
-                        <span 
-                            class="text-sm truncate "
-                        >
-                            {{ subCal.name }}
-                        </span>
+            <div class="w-72 bg-gray-50 border-r p-4 overflow-y-auto hidden md:flex flex-col">
+              <!-- Sidebar Header -->
+                <div class="mb-1 pb-4 border-b border-gray-200">
+                    <div class="mb-6">
+                        <Logo icon-class="h-8 w-8" text-class="text-2xl" />
                     </div>
+                    
+                    <div v-if="eventsStore.calendar">
+                        <h1 class="text-xl font-bold text-gray-800 leading-tight">{{ eventsStore.calendar.name }}</h1>
+                    </div>
+                </div>
+
+                <!-- Sidebar Content -->
+                <div class="flex-1 ">
+                    <!-- calendar date selector item -->
+                    <div class="mb-6 ">
+                        <Calendar v-model="selectedDate" class="rounded-md border bg-white shadow-sm " />
+                    </div>
+                    <!-- sub-calendars item -->
+                    <div
+                        class="flex items-center justify-between cursor-pointer group mb-2"
+                        @click="isSubCalendarsExpanded = !isSubCalendarsExpanded"
+                    >
+                        <p class="text-sm font-semibold text-gray-500 tracking-tight caps uppercase">Sub-calendars</p>
+                        <component
+                            :is="isSubCalendarsExpanded ? ChevronDown : ChevronRight"
+                            class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors"
+                        />
+                    </div>
+
+                    <div v-show="isSubCalendarsExpanded" class="space-y-1 max-h-[300px] overflow-y-auto">
+                        <div
+                            v-for="subCal in eventsStore.subCalendars"
+                            :key="subCal.id"
+                            class="flex items-center cursor-pointer text-white p-1 rounded relative"
+                            @click="toggleSubCalendar(subCal.id)"
+                            :style="{
+                                    backgroundColor: subCal.color,
+                                    opacity: selectedSubCalendars.includes(subCal.id) ? 1 : 0.4
+                                }"
+                            :class="{ 'with-overlay': !selectedSubCalendars.includes(subCal.id) }"
+                        >
+
+                          <LucideLock
+                              v-if="!hasModifyPermissionToSubCalendar(subCal.id)"
+                              class="h-4 w-4  flex-shrink-0"
+                          />
+                            <span
+                                class="text-sm pl-1 truncate "
+                            >
+                                {{ subCal.name }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="mt-auto pt-4 border-t border-gray-200">
+                    <p class="flex items-center space-x-2 text-gray-600 text-sm" title="Name of key used to access the service">
+                      <Key class="w-4 h-4 text-gray-400"/>
+                      <span class="truncate">{{ eventsStore.accessKeyDetail?.name }}</span>
+                    </p>
                 </div>
             </div>
             <!--          content with the events-->
             <div class="flex-1 p-4 overflow-auto">
-                <div class="mb-4 flex justify-between items-center">
-                    <h1 class="text-2xl font-bold text-gray-800">{{ eventsStore.calendar?.name }}</h1>
-                    <p class="flex items-center space-x-2" title="Name of key used to access the service">
-                      <Key class="w-4 h-4 text-gray-500"/>
-                      <span>{{ eventsStore.accessKeyDetail.name }}</span>
-                    </p>
-                </div>
-                <FullCalendar :options="calendarOptions" />
+                <FullCalendar ref="fullCalendarRef" :options="calendarOptions" />
             </div>
         </div>
 
