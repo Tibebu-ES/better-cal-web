@@ -2,7 +2,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { Calendar, Menu, X } from 'lucide-vue-next'
+import { Menu, X } from 'lucide-vue-next'
+import Logo from '@/components/Logo.vue'
 
 const router = useRouter()
 const isMenuOpen = ref(false)
@@ -11,9 +12,8 @@ const isMenuOpen = ref(false)
 <template>
   <nav class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
     <div class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-2 cursor-pointer" @click="router.push('/')">
-        <Calendar class="h-6 w-6 text-primary" />
-        <span class="text-xl font-bold tracking-tight">BetterCal</span>
+      <div class="cursor-pointer" @click="router.push('/')">
+        <Logo />
       </div>
       
       <!-- Desktop Nav -->

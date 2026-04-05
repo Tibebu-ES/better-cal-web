@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Calendar, ListPlus, LayoutTemplate, GalleryVerticalEnd, Eye, ChevronUp, User2 } from 'lucide-vue-next'
+import { Calendar, ListPlus, LayoutTemplate, Eye, ChevronUp, User2 } from 'lucide-vue-next'
+import Logo from '@/components/Logo.vue'
 import {
   Sidebar,
   SidebarContent,
@@ -55,14 +56,9 @@ const items = [
     <SidebarHeader class="px-3 py-2">
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="lg">
-            <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <GalleryVerticalEnd class="size-4" />
-            </div>
-            <div class="flex flex-col gap-0.5 leading-none">
-              <span class="font-semibold">BetterCal</span>
-            </div>
-          </SidebarMenuButton>
+          <router-link to="/" class="flex items-center gap-2 px-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors overflow-hidden h-12">
+            <Logo class="px-2" text-class="group-data-[collapsible=icon]:hidden" />
+          </router-link>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>

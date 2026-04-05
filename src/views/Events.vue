@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import {Key, Calendar as CalendarIcon, Clock, LucideLock, Calendar} from 'lucide-vue-next';
+import {Key, Calendar as CalendarIcon, Clock, LucideLock} from 'lucide-vue-next';
+import Logo from '@/components/Logo.vue';
 import { useEventsStore } from '@/stores/events';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -242,9 +243,8 @@ function handleDeleteEvent(id: number) {
         <div v-else class="flex-1 flex overflow-hidden">
             <!--left sidebar-->
             <div class="w-64 bg-gray-50 border-r p-4 overflow-y-auto hidden md:block">
-                <div class="flex items-center gap-2 mb-8">
-                  <CalendarIcon class="h-6 w-6 text-primary" />
-                  <span class="text-xl font-bold tracking-tight">BetterCal</span>
+                <div class="mb-8">
+                  <Logo />
                 </div>
                 <p class="text-sm font-semibold mb-2 text-gray-500 tracking-tight">Sub-calendars</p>
                 <div class="space-y-2">
