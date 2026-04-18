@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import {ref } from 'vue'
 import { Check, ChevronsUpDown, X } from 'lucide-vue-next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,11 +35,6 @@ const emit = defineEmits<{
 
 const open = ref(false)
 
-const selectedLabels = computed(() => {
-  return props.options
-    .filter((opt) => props.modelValue.includes(opt.id))
-    .map((opt) => opt.name)
-})
 
 function toggleOption(id: number) {
   const newValue = props.modelValue.includes(id)

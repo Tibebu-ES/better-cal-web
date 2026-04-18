@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import MultiSelect from "@/components/ui/MultiSelect.vue"
 import type { CalendarEvent, CustomEventFieldValue } from '@/stores/events'
 import { useEventsStore } from '@/stores/events'
-import type { SubCalendar, CustomEventField } from '@/stores/calendar'
+import type { SubCalendar } from '@/stores/calendar'
 
 interface Props {
   open: boolean
@@ -73,7 +73,7 @@ watch(() => props.open, (isOpen) => {
       form.value = {
         id: props.event.id,
         title: props.event.title || '',
-        sub_calendar_id: props.event.sub_calendar_id || (props.subCalendars.length > 0 ? props.subCalendars[0].id : 0),
+        sub_calendar_id: props.event.sub_calendar_id || (props.subCalendars?.[0]?.id || 0),
         start_date: props.event.start_date ? formatDateTime(props.event.start_date) : '',
         end_date: props.event.end_date ? formatDateTime(props.event.end_date) : '',
         all_day: props.event.all_day || false,
@@ -83,7 +83,7 @@ watch(() => props.open, (isOpen) => {
       form.value = {
         id: undefined,
         title: '',
-        sub_calendar_id: props.subCalendars.length > 0 ? props.subCalendars[0].id : 0,
+        sub_calendar_id: props.subCalendars?.[0]?.id || 0,
         start_date: '',
         end_date: '',
         all_day: false,
@@ -222,7 +222,8 @@ const isNew = computed(() => !form.value.id)
           <template v-if="field.type === 'text'">
             <Input 
               :id="'field-' + field.id" 
-              v-model="getFieldValue(field.id)!.value" 
+              :model-value="getFieldValue(field.id)?.value || ''"
+              @update:model-value="val => { const f = getFieldValue(field.id); if (f) f.value = val as string }"
               :placeholder="field.name" 
             />
           </template>
@@ -230,7 +231,8 @@ const isNew = computed(() => !form.value.id)
           <template v-else-if="field.type === 's_select'">
             <select 
               :id="'field-' + field.id" 
-              v-model="getFieldValue(field.id)!.custom_event_field_option_id"
+              :value="getFieldValue(field.id)?.custom_event_field_option_id || null"
+              @change="e => { const f = getFieldValue(field.id); if (f) f.custom_event_field_option_id = Number((e.target as HTMLSelectElement).value) || null }"
               class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option :value="null">None</option>
@@ -242,7 +244,8 @@ const isNew = computed(() => !form.value.id)
 
           <template v-else-if="field.type === 'm_select'">
             <MultiSelect 
-              :options="field.options" 
+              v-if="getFieldValue(field.id)"
+              :options="field.options || []" 
               v-model="getFieldValue(field.id)!.custom_event_field_option_ids!"
               :placeholder="'Select ' + field.name"
             />

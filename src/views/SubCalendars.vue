@@ -4,7 +4,7 @@ import router from "@/router"
 import { useCalendarStore, type SubCalendar } from "@/stores/calendar"
 import ConfirmModal from "@/components/ConfirmModal.vue"
 import { toast } from "vue-sonner"
-import { Plus, Pencil, Trash2, Check, X, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, MoreHorizontal } from "lucide-vue-next"
+import { Plus, Pencil, Trash2, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, MoreHorizontal } from "lucide-vue-next"
 
 import { Badge } from "@/components/ui/badge"
 import {
