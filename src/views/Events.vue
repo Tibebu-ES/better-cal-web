@@ -8,6 +8,7 @@ import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import EventModal from '@/components/EventModal.vue';
 import { Calendar } from '@/components/ui/calendar';
 import { toDate } from 'reka-ui/date';
@@ -84,12 +85,12 @@ const filteredEvents = computed(() => {
 });
 
 const calendarOptions = computed(() => ({
-    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
     initialView: 'dayGridMonth',
     headerToolbar: {
         left: 'prev,next today',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
     },
     editable: true,
     selectable: true,
