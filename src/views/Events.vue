@@ -15,6 +15,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toDate } from 'reka-ui/date';
 import type { CalendarEvent } from '@/stores/events';
 import type { DateValue } from 'reka-ui';
+import {toast} from "vue-sonner";
 
 const route = useRoute();
 const eventsStore = useEventsStore();
@@ -30,6 +31,7 @@ const selectedDate = ref<DateValue>();
 const isSubCalendarsExpanded = ref(true);
 const isMobileSidebarOpen = ref(false);
 const isMobile = ref(window.innerWidth < 768);
+const errorMessage = ref<string | null>(null);
 
 function onResize() {
     isMobile.value = window.innerWidth < 768;
@@ -199,6 +201,7 @@ function handleDateSelect(selectInfo: any) {
       return;
     }
 
+    errorMessage.value = null;
 
     selectedEvent.value = {
         title: '',
@@ -232,17 +235,30 @@ function handleEventClick(clickInfo: any) {
       return;
     }
 
+    errorMessage.value = null;
 
     selectedEvent.value = { ...event };
     canModifyEvents.value = canDeleteEvents.value = hasPermissionToModify;
     isEventModalOpen.value = true;
 }
 
-function handleSaveEvent(eventData: Partial<CalendarEvent>) {
-    if (eventData.id) {
-        eventsStore.updateEvent(eventData.id, eventData);
-    } else {
-        eventsStore.createEvent(eventData as Omit<CalendarEvent, 'id'>);
+async function handleSaveEvent(eventData: Partial<CalendarEvent>) {
+    try {
+        errorMessage.value = null;
+        if (eventData.id) {
+            await eventsStore.updateEvent(eventData.id, eventData);
+        } else {
+            await eventsStore.createEvent(eventData as Omit<CalendarEvent, 'id'>);
+        }
+        isEventModalOpen.value = false;
+        toast.success('Event saved successfully');
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            const errors = error.response.data.errors;
+            errorMessage.value = Object.values(errors).flat().join(' ');
+        } else {
+            errorMessage.value = error.response?.data?.message || 'An unexpected error occurred.';
+        }
     }
 }
 
@@ -447,6 +463,7 @@ watch(selectedDate, (newDate) => {
             :sub-calendars="subCalendarsWithModifyPermission"
             :can-delete="canDeleteEvents"
             :can-modify="canModifyEvents"
+            :error-message="errorMessage"
             @save="handleSaveEvent"
             @delete="handleDeleteEvent"
         />

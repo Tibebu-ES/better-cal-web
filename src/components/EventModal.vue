@@ -21,6 +21,7 @@ interface Props {
   subCalendars: SubCalendar[]
   canDelete?: boolean
   canModify?: boolean
+  errorMessage?: string | null
 }
 
 const props = defineProps<Props>()
@@ -132,6 +133,9 @@ function handleSave() {
   // Only send what's needed for the backend if we want to be strict, 
   // but based on instructions we just need to send custom_event_field_values
   emit('save', payload)
+}
+
+function handleCancel() {
   emit('update:open', false)
 }
 
@@ -153,6 +157,10 @@ const isNew = computed(() => !form.value.id)
       </DialogHeader>
       
       <div class="grid gap-4 py-4" >
+        <div v-if="errorMessage" class="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md text-sm">
+          {{ errorMessage }}
+        </div>
+
         <div class="grid gap-2">
           <Label for="title">Title</Label>
           <Input id="title" v-model="form.title" placeholder="Event title" />
@@ -262,7 +270,7 @@ const isNew = computed(() => !form.value.id)
             </Button>
         </div>
         <div class="flex gap-2">
-            <Button variant="outline" @click="emit('update:open', false)">
+            <Button variant="outline" @click="handleCancel">
               Cancel
             </Button>
             <Button v-if="canModify" @click="handleSave">
