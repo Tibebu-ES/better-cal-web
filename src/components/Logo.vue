@@ -19,17 +19,17 @@ defineProps<Props>()
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient :id="'logo-bg-' + $.uid" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#4f46e5"/>
           <stop offset="100%" stop-color="#7c3aed"/>
         </linearGradient>
-        <linearGradient id="logo-dot" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient :id="'logo-dot-' + $.uid" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#fbbf24"/>
           <stop offset="100%" stop-color="#f59e0b"/>
         </linearGradient>
       </defs>
       <!-- Rounded square background -->
-      <rect width="32" height="32" rx="7" ry="7" fill="url(#logo-bg)"/>
+      <rect width="32" height="32" rx="7" ry="7" :fill="'url(#logo-bg-' + $.uid + ')'"/>
       <!-- Calendar body -->
       <rect x="5" y="9" width="22" height="19" rx="2.5" ry="2.5" fill="white" opacity="0.12"/>
       <rect x="5" y="9" width="22" height="19" rx="2.5" ry="2.5" fill="none" stroke="white" stroke-width="1.4" stroke-opacity="0.9"/>
@@ -51,7 +51,7 @@ defineProps<Props>()
       <circle cx="10"   cy="24.5" r="1.1" fill="white" opacity="0.45"/>
       <circle cx="14.5" cy="24.5" r="1.1" fill="white" opacity="0.45"/>
       <!-- Today highlight -->
-      <circle cx="19" cy="24.5" r="2.5" fill="url(#logo-dot)"/>
+      <circle cx="19" cy="24.5" r="2.5" :fill="'url(#logo-dot-' + $.uid + ')'"/>
       <polyline points="17.8,24.5 18.7,25.4 20.2,23.6" fill="none" stroke="white" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="23.5" cy="24.5" r="1.1" fill="white" opacity="0.45"/>
     </svg>
