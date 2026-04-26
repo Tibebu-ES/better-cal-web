@@ -109,14 +109,14 @@ export const useCalendarStore = defineStore("calendar", {
             this.pagination = res.data;
         },
 
-        async createSubCalendar(SubCalendar: {name: string, color: string, overlap: boolean}) {
+        async createSubCalendar(SubCalendar: {name: string, color: string, overlap: boolean, active: boolean}) {
             //if selectedCalendar is null, return
             if (!this.selectedCalendar) return;
             const res = await api.post(`/v1/calendars/${this.selectedCalendar.id}/sub-calendars`, SubCalendar);
             this.subCalendars.push(res.data);
         },
 
-        async updateSubCalendar(id: number, SubCalendar: {name: string, color: string, overlap: boolean}) {
+        async updateSubCalendar(id: number, SubCalendar: {name: string, color: string, overlap: boolean, active: boolean}) {
             if (!this.selectedCalendar) return;
             const res = await api.put(`/v1/calendars/${this.selectedCalendar.id}/sub-calendars/${id}`, SubCalendar);
             this.subCalendars = this.subCalendars.map(sub => sub.id === id ? res.data : sub);

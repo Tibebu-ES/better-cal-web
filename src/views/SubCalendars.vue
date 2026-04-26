@@ -77,6 +77,7 @@ const form = reactive({
   name: "",
   color: "#3b82f6",
   overlap: false,
+  active: true,
 })
 
 const dialogTitle = computed(() =>
@@ -89,6 +90,7 @@ function openCreateDialog() {
   form.name = ""
   form.color = "#3b82f6"
   form.overlap = false
+  form.active = true
   dialogOpen.value = true
 }
 
@@ -98,6 +100,7 @@ function openEditDialog(sub: SubCalendar) {
   form.name = sub.name ?? ""
   form.color = sub.color || "#3b82f6"
   form.overlap = !!sub.overlap
+  form.active = !!sub.active
   dialogOpen.value = true
 }
 
@@ -106,6 +109,7 @@ async function submitDialog() {
     name: form.name.trim(),
     color: form.color,
     overlap: form.overlap,
+    active: form.active,
   }
 
   if (!payload.name) return
@@ -391,8 +395,20 @@ onMounted(async () => {
             </div>
             <Checkbox
               id="sub-overlap"
-              :checked="form.overlap"
-              @update:checked="form.overlap = $event"
+              v-model="form.overlap"
+            />
+          </div>
+
+          <div class="flex flex-row items-center justify-between rounded-lg border bg-muted/30 p-4 shadow-sm">
+            <div class="space-y-0.5">
+              <Label for="sub-active" class="text-sm font-semibold cursor-pointer">Active</Label>
+              <p class="text-[12px] text-muted-foreground leading-tight">
+                Show or hide this sub-calendar in the calendar view.
+              </p>
+            </div>
+            <Checkbox
+              id="sub-active"
+              v-model="form.active"
             />
           </div>
         </div>
